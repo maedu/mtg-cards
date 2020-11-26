@@ -1,0 +1,29 @@
+GET http://localhost:4004/cards/transform HTTP/1.1
+
+###
+
+POST http://cards:4001/cards HTTP/1.1
+content-type: application/json
+
+{
+    "name": "gugus"
+    
+}
+
+
+###
+
+GET http://localhost:4001/cards/5f666907ca5504e135b45ac2 HTTP/1.1
+content-type: application/json
+
+
+
+
+###
+
+DELETE http://localhost:4001/cards/5f666909ca5504e135b45ac4 HTTP/1.1
+content-type: application/json
+
+
+
+
