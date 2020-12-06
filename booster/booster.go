@@ -21,7 +21,7 @@ func GenerateBoosters(set string) ([]Booster, error) {
 	boosters := []Booster{}
 
 	for i := 0; i < 6; i++ {
-		booster, err := generateBooster(set)
+		booster, err := GenerateBooster(set)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,8 @@ func GenerateBoosters(set string) ([]Booster, error) {
 	return boosters, nil
 }
 
-func generateBooster(set string) (Booster, error) {
+// GenerateBooster generates and returns a booster pack.
+func GenerateBooster(set string) (Booster, error) {
 
 	cards, err := getCards(set)
 	if err != nil {
