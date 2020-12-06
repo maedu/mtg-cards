@@ -3,7 +3,7 @@ package sealed
 import (
 	"net/http"
 
-	"bitbucket.org/spinnerweb/cards/booster"
+	"github.com/maedu/mtg-cards/booster"
 	"github.com/gin-gonic/gin"
 )
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"bitbucket.org/spinnerweb/cards/db"
+	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -1,4 +1,4 @@
-module bitbucket.org/spinnerweb/cards
+module github.com/maedu/mtg-cards
 
 go 1.15
 

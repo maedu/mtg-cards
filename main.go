@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	env "bitbucket.org/spinnerweb/accounting_common/env"
-	cardApi "bitbucket.org/spinnerweb/cards/card/api"
-	"bitbucket.org/spinnerweb/cards/draft/sealed"
-	"bitbucket.org/spinnerweb/cards/server"
+	cardApi "github.com/maedu/mtg-cards/card/api"
+	"github.com/maedu/mtg-cards/draft/sealed"
+	"github.com/maedu/mtg-cards/server"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/spinnerweb/cards/db"
+	"github.com/maedu/mtg-cards/db"
 	pagination "github.com/maedu/mongo-go-pagination"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

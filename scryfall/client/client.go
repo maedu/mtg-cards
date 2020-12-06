@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"bitbucket.org/spinnerweb/cards/scryfall/db"
+	"github.com/maedu/mtg-cards/scryfall/db"
 )
 
 const oracleCards = "oracle_cards"

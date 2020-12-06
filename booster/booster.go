@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/spinnerweb/cards/card/db"
+	"github.com/maedu/mtg-cards/card/db"
 )
 
 // Booster containing cards for an edition

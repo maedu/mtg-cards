@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/spinnerweb/cards/card/db"
-	"bitbucket.org/spinnerweb/cards/scryfall/client"
-	scryfallDB "bitbucket.org/spinnerweb/cards/scryfall/db"
+	"github.com/maedu/mtg-cards/card/db"
+	"github.com/maedu/mtg-cards/scryfall/client"
+	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
 	"github.com/gin-gonic/gin"
 )
 
