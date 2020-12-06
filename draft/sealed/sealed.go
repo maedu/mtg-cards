@@ -16,15 +16,11 @@ func Setup(r *gin.Engine) {
 func handleGetSealed(c *gin.Context) {
 	setName := c.Query("set")
 
-	boosters := []booster.Booster{}
-
-	for i := 0; i < 6; i++ {
-		booster, err := booster.GenerateBooster(setName)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-		boosters = append(boosters, booster)
+	boosters, err := booster.GenerateBoosters(setName)
+	if err != nil {
+		c.Error(err)
+		return
 	}
+
 	c.JSON(http.StatusOK, boosters)
 }
