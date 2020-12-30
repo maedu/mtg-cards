@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/maedu/mtg-cards/db"
 	pagination "github.com/maedu/mongo-go-pagination"
+	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -255,8 +255,8 @@ func (collection *CardCollection) GetCardByName(name string) (*Card, error) {
 	return card, nil
 }
 
-// GetCardBySetName retrieves a card by its set name from the db
-func (collection *CardCollection) GetCardBySetName(setName string) ([]*Card, error) {
+// GetCardsBySetName retrieves a card by its set name from the db
+func (collection *CardCollection) GetCardsBySetName(setName string) ([]*Card, error) {
 	var cards []*Card = []*Card{}
 	ctx := collection.Context
 

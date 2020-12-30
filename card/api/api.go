@@ -7,23 +7,55 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/db"
 	"github.com/maedu/mtg-cards/scryfall/client"
 	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
-	"github.com/gin-gonic/gin"
 )
 
 type FindCardsRequest struct {
-	Names []string `json:"names"`
+	Cards []string `json:"cards"`
+	Sets  []string `json:"sets"`
+}
+type FindCardsResponse struct {
+	Cards map[string]*db.Card   `json:"cards"`
+	Sets  map[string][]*db.Card `json:"sets"`
 }
 
 // Setup Setup REST API
 func Setup(r *gin.Engine) {
 	r.GET("/api/cards", handleGetCards)
+	r.GET("/api/cards/set", handleGetSet)
 	r.POST("/api/cards/find", handleFindCards)
 	r.GET("/api/cards/update", handleUpdateCards)
 	r.GET("/api/cards/transform", handleTransformCards)
 
+}
+
+func handleGetSet(c *gin.Context) {
+
+	var err error
+
+	set := c.Query("set")
+	collection, err := db.GetCardCollection()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	defer collection.Disconnect()
+
+	loadedCards, err := collection.GetCardsBySetName(set)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	names := ""
+	for _, card := range loadedCards {
+		names = names + "\n1 " + card.Name
+	}
+
+	c.JSON(http.StatusOK, names)
 }
 
 func handleGetCards(c *gin.Context) {
@@ -83,15 +115,30 @@ func handleFindCards(c *gin.Context) {
 	}
 	defer collection.Disconnect()
 
-	response := map[string]*db.Card{}
-
-	for _, name := range request.Names {
+	cards := map[string]*db.Card{}
+	for _, name := range request.Cards {
 		card, err := collection.GetCardByName(name)
 		if err != nil {
 			c.Error(err)
 			return
 		}
-		response[name] = card
+		cards[name] = card
+	}
+	defer collection.Disconnect()
+
+	sets := map[string][]*db.Card{}
+	for _, name := range request.Sets {
+		cards, err := collection.GetCardsBySetName(name)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		sets[name] = cards
+	}
+
+	response := FindCardsResponse{
+		Cards: cards,
+		Sets:  sets,
 	}
 
 	c.JSON(http.StatusOK, response)

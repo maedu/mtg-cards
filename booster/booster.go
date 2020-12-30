@@ -65,7 +65,7 @@ func getCards(set string) ([]*db.Card, error) {
 	}
 	defer collection.Disconnect()
 
-	return collection.GetCardBySetName(set)
+	return collection.GetCardsBySetName(set)
 }
 
 func generateCommanderLegendsBooster(cards []*db.Card) Booster {
