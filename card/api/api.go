@@ -268,8 +268,8 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 	))
 
 	cardTypesToCheck := []db.CardType{
-		db.Artifact,
 		db.Creature,
+		db.Artifact,
 		db.Enchantment,
 		db.Instant,
 		db.Land,
