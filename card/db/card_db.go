@@ -255,6 +255,32 @@ func (collection *CardCollection) GetCardByName(name string) (*Card, error) {
 	return card, nil
 }
 
+// GetCardsByNames retrieves cards by their names from the db
+func (collection *CardCollection) GetCardsByNames(names []string) ([]*Card, error) {
+	log.Println("find cards by names")
+	var cards []*Card = []*Card{}
+	ctx := collection.Context
+
+	inFilter := bson.M{"$in": names}
+
+	filter := bson.M{"$or": bson.A{
+		bson.M{"name": inFilter},
+		bson.M{"card_faces.name": inFilter},
+	}}
+
+	cursor, err := collection.Collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &cards)
+	if err != nil {
+		log.Printf("Failed marshalling %v", err)
+		return nil, err
+	}
+	return cards, nil
+}
+
 // GetCardsBySetName retrieves a card by its set name from the db
 func (collection *CardCollection) GetCardsBySetName(setName string) ([]*Card, error) {
 	var cards []*Card = []*Card{}

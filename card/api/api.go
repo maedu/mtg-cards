@@ -105,7 +105,7 @@ func handleFindCards(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		fmt.Println(err)
 		log.Print(err)
-		c.JSON(http.StatusBadRequest, gin.H{"msg": err})
+		c.JSON(http.StatusBadRequest, err)
 		return
 	}
 	collection, err := db.GetCardCollection()
@@ -116,13 +116,14 @@ func handleFindCards(c *gin.Context) {
 	defer collection.Disconnect()
 
 	cards := map[string]*db.Card{}
-	for _, name := range request.Cards {
-		card, err := collection.GetCardByName(name)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-		cards[name] = card
+	foundCards, err := collection.GetCardsByNames(request.Cards)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	for _, card := range foundCards {
+		cards[card.Name] = card
 	}
 	defer collection.Disconnect()
 
