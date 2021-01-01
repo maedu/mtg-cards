@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maedu/mtg-cards/card/cardgroup"
 	"github.com/maedu/mtg-cards/card/db"
 	"github.com/maedu/mtg-cards/scryfall/client"
 	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
@@ -292,7 +293,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		}
 	}
 
-	card := db.Card{
+	card := &db.Card{
 		ScryfallID:      scryfallCard.ID,
 		Name:            scryfallCard.Name,
 		Lang:            scryfallCard.Lang,
@@ -317,7 +318,9 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		SearchText:      searchText,
 	}
 
-	return &card
+	cardgroup.CalculateCardGroups(card)
+
+	return card
 }
 
 func parseAmount(amount string) float64 {

@@ -67,6 +67,7 @@ type Card struct {
 	CardFaces       []Card             `bson:"card_faces" json:"cardFaces"`
 	IsCommander     bool               `bson:"is_commander" json:"isCommander"`
 	SearchText      string             `bson:"search_text" json:"searchText"`
+	CardGroups      []string           `bson:"card_groups" json:"cardGroups"`
 }
 
 // CardCollection ...
