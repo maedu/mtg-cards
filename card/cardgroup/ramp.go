@@ -23,7 +23,7 @@ var rampCards = []string{
 }
 
 func isManaArtifact(card *db.Card) bool {
-	if card.CardType != db.Artifact {
+	if card.CardType == db.Land {
 		return false
 	}
 

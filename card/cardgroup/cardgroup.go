@@ -9,5 +9,6 @@ func CalculateCardGroups(card *db.Card) {
 	calculateDraw(card)
 	calculateBoardWhipes(card)
 	calculateRemoval(card)
+	calculateLand(card)
 
 }
