@@ -14,13 +14,13 @@ func Setup(r *gin.Engine) {
 }
 
 func handleGetSealed(c *gin.Context) {
-	setName := c.Query("set")
+	setNames := c.QueryArray("set")
 	boosterType := c.Query("type")
 	if boosterType == "" {
 		boosterType = booster.Commander
 	}
 
-	boosters, err := booster.GenerateBoosters(boosterType, setName)
+	boosters, err := booster.GenerateBoosters(boosterType, setNames)
 	if err != nil {
 		c.Error(err)
 		return

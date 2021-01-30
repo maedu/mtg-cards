@@ -22,10 +22,10 @@ type Booster struct {
 
 // GenerateBoosters generates and returns 6 booster packs.
 // For Commander Legends, there is an additional "booster pack" containing only two Prismatic Pipers
-func GenerateBoosters(boosterType string, set string) ([]Booster, error) {
+func GenerateBoosters(boosterType string, sets []string) ([]Booster, error) {
 	boosters := []Booster{}
 
-	for i := 0; i < 6; i++ {
+	for _, set := range sets {
 		booster, err := GenerateBooster(boosterType, set)
 		if err != nil {
 			return nil, err
