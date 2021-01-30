@@ -211,9 +211,7 @@ func transformCards() error {
 func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 
 	switch scryfallCard.Layout {
-	case "art_series":
-	case "token":
-	case "emblem":
+	case "art_series", "token", "emblem":
 		// Ignore those types
 		return nil
 	}
