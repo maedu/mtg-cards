@@ -9,6 +9,11 @@ import (
 	"github.com/maedu/mtg-cards/card/db"
 )
 
+const (
+	Normal    string = "Normal"
+	Commander string = "Commander"
+)
+
 // Booster containing cards for an edition
 type Booster struct {
 	Set   string     `json:"set"`
@@ -17,19 +22,19 @@ type Booster struct {
 
 // GenerateBoosters generates and returns 6 booster packs.
 // For Commander Legends, there is an additional "booster pack" containing only two Prismatic Pipers
-func GenerateBoosters(set string) ([]Booster, error) {
+func GenerateBoosters(boosterType string, set string) ([]Booster, error) {
 	boosters := []Booster{}
 
 	for i := 0; i < 6; i++ {
-		booster, err := GenerateBooster(set)
+		booster, err := GenerateBooster(boosterType, set)
 		if err != nil {
 			return nil, err
 		}
 		boosters = append(boosters, booster)
 	}
 
-	if set == "Commander Legends" {
-		booster, err := GenerateBoosterWithOnlyPrismaticPiper(set)
+	if boosterType == Commander {
+		booster, err := GenerateBoosterWithOnlyPrismaticPiper("Commander Legends")
 		if err != nil {
 			return nil, err
 		}
@@ -40,7 +45,7 @@ func GenerateBoosters(set string) ([]Booster, error) {
 }
 
 // GenerateBooster generates and returns a booster pack.
-func GenerateBooster(set string) (Booster, error) {
+func GenerateBooster(boosterType string, set string) (Booster, error) {
 
 	cards, err := getCards(set)
 	if err != nil {
@@ -51,10 +56,15 @@ func GenerateBooster(set string) (Booster, error) {
 		return Booster{}, fmt.Errorf("No cards found for set %s", set)
 	}
 
-	if set == "Commander Legends" {
-		return generateCommanderLegendsBooster(cards), nil
+	switch boosterType {
+	case Normal:
+		return generateNormalBooster(cards, set), nil
+	case Commander:
+		return generateCommanderBooster(cards, set), nil
+	default:
+		return Booster{}, fmt.Errorf("Booster Type %s not configured yet", boosterType)
+
 	}
-	return generateNormalBooster(cards, set), nil
 }
 
 func getCards(set string) ([]*db.Card, error) {
@@ -68,7 +78,7 @@ func getCards(set string) ([]*db.Card, error) {
 	return collection.GetCardsBySetName(set)
 }
 
-func generateCommanderLegendsBooster(cards []*db.Card) Booster {
+func generateCommanderBooster(cards []*db.Card, set string) Booster {
 	// No of cards: 20
 	// 1 non-legendary rare/mythic rare
 	// 1 foil card (how do we replace that?)
@@ -83,7 +93,7 @@ func generateCommanderLegendsBooster(cards []*db.Card) Booster {
 
 	return Booster{
 		Cards: boosterCards,
-		Set:   "Commander Legends",
+		Set:   set,
 	}
 }
 
@@ -201,7 +211,7 @@ func filterByRarity(cards []*db.Card, rarity string) []*db.Card {
 func filterByLegendaryCreature(cards []*db.Card) []*db.Card {
 	result := []*db.Card{}
 	for _, card := range cards {
-		if strings.Contains(card.TypeLine, "Legendary Creature") {
+		if strings.Contains(card.TypeLine, "Legendary Creature") || strings.Contains(card.TypeLine, "Legendary Snow Creature") {
 			result = append(result, card)
 		}
 	}
@@ -212,7 +222,7 @@ func filterByLegendaryCreature(cards []*db.Card) []*db.Card {
 func filterByNotLegendaryCreature(cards []*db.Card) []*db.Card {
 	result := []*db.Card{}
 	for _, card := range cards {
-		if !strings.Contains(card.TypeLine, "Legendary Creature") {
+		if !strings.Contains(card.TypeLine, "Legendary Creature") && !strings.Contains(card.TypeLine, "Legendary Snow Creature") {
 			result = append(result, card)
 		}
 	}

@@ -251,7 +251,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		}
 	}
 
-	isCommander := strings.Contains(scryfallCard.TypeLine, "Legendary Creature") || strings.Contains(scryfallCard.OracleText, "can be your commander")
+	isCommander := strings.Contains(scryfallCard.TypeLine, "Legendary Creature") || strings.Contains(scryfallCard.TypeLine, "Legendary Snow Creature") || strings.Contains(scryfallCard.OracleText, "can be your commander")
 
 	rarity := scryfallCard.Rarity
 	if rarity == "mythic" {
@@ -291,6 +291,11 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		}
 	}
 
+	colors := scryfallCard.Colors
+	if colors == nil {
+		colors = []string{}
+	}
+
 	card := &db.Card{
 		ScryfallID:      scryfallCard.ID,
 		Name:            scryfallCard.Name,
@@ -301,7 +306,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		TypeLine:        scryfallCard.TypeLine,
 		CardType:        cardType,
 		OracleText:      scryfallCard.OracleText,
-		Colors:          scryfallCard.Colors,
+		Colors:          colors,
 		ColorIdentity:   scryfallCard.ColorIdentity,
 		Keywords:        scryfallCard.Keywords,
 		LegalInComander: legalInCommander,
