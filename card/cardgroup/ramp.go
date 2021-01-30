@@ -8,13 +8,13 @@ import (
 )
 
 func calculateRamp(card *db.Card) {
-	if isManaArtifact(card) || isRampCard(card) {
+	if hasRampText(card) || isRampCard(card) {
 		card.CardGroups = append(card.CardGroups, "Ramp")
 		card.SearchText = fmt.Sprintf("%s, ramp", card.SearchText)
 	}
 }
 
-var rampManaRegex, _ = regexp.Compile("\\{T\\}: Add (\\{[CBUGRW]\\}|[a-zA-Z ]+mana)")
+var rampManaRegex, _ = regexp.Compile("(?i)Adds? (\\{[CBUGRW]\\}|[a-zA-Z ]+mana)")
 
 var rampCards = []string{
 	"Jeweled Lotus",
@@ -22,7 +22,7 @@ var rampCards = []string{
 	"Horizon Stone",
 }
 
-func isManaArtifact(card *db.Card) bool {
+func hasRampText(card *db.Card) bool {
 	if card.CardType == db.Land {
 		return false
 	}
