@@ -76,6 +76,26 @@ func Test_hasRampText(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "Raider's Karve",
+			args: args{
+				card: &db.Card{
+					CardType:   "Artifact",
+					OracleText: "Whenever Raiders’ Karve attacks, look at the top card of your library. If it’s a land card, you may put it onto the battlefield tapped.",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Binding the Old Gods",
+			args: args{
+				card: &db.Card{
+					CardType:   "Enchantment",
+					OracleText: "II Search your library for a Forest card, put it onto the battlefield tapped, then shuffle your library.",
+				},
+			},
+			want: true,
+		},
+		{
 			name: "Barbarian Ring",
 			args: args{
 				card: &db.Card{

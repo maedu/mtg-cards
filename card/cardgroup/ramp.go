@@ -15,6 +15,7 @@ func calculateRamp(card *db.Card) {
 }
 
 var rampManaRegex, _ = regexp.Compile("(?i)Adds? (\\{[CBUGRW]\\}|[a-zA-Z ]+mana)")
+var landCardRegex, _ = regexp.Compile("(?i)a (Land|Forest|Plains|Mountain|Swamp|Island) card[^.]+put it onto the battlefield")
 
 var rampCards = []string{
 	"Jeweled Lotus",
@@ -27,7 +28,7 @@ func hasRampText(card *db.Card) bool {
 		return false
 	}
 
-	return rampManaRegex.MatchString(card.OracleText)
+	return rampManaRegex.MatchString(card.OracleText) || landCardRegex.MatchString(card.OracleText)
 }
 
 func isRampCard(card *db.Card) bool {

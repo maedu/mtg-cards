@@ -257,13 +257,20 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 	if rarity == "mythic" {
 		rarity = "mythic rare"
 	}
-	searchText := strings.ToLower(fmt.Sprintf("%s, %s, %s, %s, %v, %s",
+
+	commanderText := ""
+	if isCommander {
+		commanderText = "commander"
+	}
+
+	searchText := strings.ToLower(fmt.Sprintf("%s, %s, %s, %s, %v, %s, %s",
 		scryfallCard.Name,
 		scryfallCard.ManaCost,
 		scryfallCard.TypeLine,
 		scryfallCard.OracleText,
 		scryfallCard.Keywords,
 		rarity,
+		commanderText,
 	))
 
 	cardTypesToCheck := []db.CardType{

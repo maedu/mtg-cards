@@ -9,8 +9,8 @@ import (
 
 func calculateBoardWhipes(card *db.Card) {
 	if isBoardWhipe(card) {
-		card.CardGroups = append(card.CardGroups, "Board Whipe")
-		card.SearchText = fmt.Sprintf("%s, board whipe", card.SearchText)
+		card.CardGroups = append(card.CardGroups, "Board Wipe")
+		card.SearchText = fmt.Sprintf("%s, board wipe", card.SearchText)
 	}
 }
 
