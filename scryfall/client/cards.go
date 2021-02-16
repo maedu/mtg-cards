@@ -59,14 +59,14 @@ func getBulkData() ([]*BulkData, error) {
 	}
 
 	defer resp.Body.Close()
-	var res BulkDataResponse
-	err = json.NewDecoder(resp.Body).Decode(&res)
+		var res BulkDataResponse
+		err = json.NewDecoder(resp.Body).Decode(&res)
 
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-	return res.Data, nil
+		if err != nil {
+			log.Print(err)
+			return nil, err
+		}
+		return res.Data, nil
 }
 
 func uri(bulkDataSlice []*BulkData) (string, error) {

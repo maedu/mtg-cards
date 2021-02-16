@@ -19,12 +19,21 @@ var removalDestroyTargetRegex, _ = regexp.Compile("(?i)Destroy target")
 var removalExile, _ = regexp.Compile("(?i)exile( another)? target")
 var removalExileGraveyard, _ = regexp.Compile("(?i)exile( another)? target([^.])+graveyard")
 
+var removalCards = []string{
+	"Duneblast",
+}
+
 func isRemoval(card *db.Card) bool {
 	if removalDestroyTargetRegex.MatchString(card.OracleText) {
 		return true
 	}
 	if removalExile.MatchString(card.OracleText) {
 		return !removalExileGraveyard.MatchString(card.OracleText)
+	}
+	for _, removalCard := range removalCards {
+		if removalCard == card.Name {
+			return true
+		}
 	}
 	return false
 }

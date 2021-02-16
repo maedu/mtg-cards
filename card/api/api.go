@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/cardgroup"
 	"github.com/maedu/mtg-cards/card/db"
+	"github.com/maedu/mtg-cards/edhrec/parser"
 	"github.com/maedu/mtg-cards/scryfall/client"
 	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
 )
@@ -117,7 +119,29 @@ func handleFindCards(c *gin.Context) {
 	defer collection.Disconnect()
 
 	cards := map[string]*db.Card{}
-	foundCards, err := collection.GetCardsByNames(request.Cards)
+	r := regexp.MustCompile(`https://edhrec.com/commanders/(.+)$`)
+
+	cardsToFind := make([]string, len(request.Cards))
+	copy(cardsToFind, request.Cards)
+
+	for _, name := range request.Cards {
+
+		// TODO improve
+		match := r.FindStringSubmatch(name)
+		if match != nil {
+			commanderCards, err := parser.FetchCommander(match[1])
+			if err != nil {
+				c.Error(err)
+				return
+			}
+			cardsToFind = append(cardsToFind, commanderCards...)
+
+		} else {
+			cards[name] = nil
+		}
+
+	}
+	foundCards, err := collection.GetCardsByNames(cardsToFind)
 	if err != nil {
 		c.Error(err)
 		return
@@ -126,7 +150,6 @@ func handleFindCards(c *gin.Context) {
 	for _, card := range foundCards {
 		cards[card.Name] = card
 	}
-	defer collection.Disconnect()
 
 	sets := map[string][]*db.Card{}
 	for _, name := range request.Sets {
