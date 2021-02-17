@@ -19,9 +19,7 @@ var removalDestroyTargetRegex, _ = regexp.Compile("(?i)Destroy target")
 var removalExile, _ = regexp.Compile("(?i)exile( another)? target")
 var removalExileGraveyard, _ = regexp.Compile("(?i)exile( another)? target([^.])+graveyard")
 
-var removalCards = []string{
-	"Duneblast",
-}
+var removalCards = []string{}
 
 func isRemoval(card *db.Card) bool {
 	if removalDestroyTargetRegex.MatchString(card.OracleText) {

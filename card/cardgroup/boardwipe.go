@@ -7,19 +7,35 @@ import (
 	"github.com/maedu/mtg-cards/card/db"
 )
 
-func calculateBoardWhipes(card *db.Card) {
-	if isBoardWhipe(card) {
+func calculateBoardWipes(card *db.Card) {
+	if isBoardWipe(card) {
 		card.CardGroups = append(card.CardGroups, "Board Wipe")
 		card.SearchText = fmt.Sprintf("%s, board wipe", card.SearchText)
 	}
 }
 
-var boardWhipeDestroyAllRegex, _ = regexp.Compile("Destroy all")
+var BoardWipeDestroyAllRegex, _ = regexp.Compile("Destroy all")
 
-func isBoardWhipe(card *db.Card) bool {
+var BoardWipeCards = []string{
+	"Cyclonic Rift",
+	"Duneblast",
+	"Toxic Deluge",
+}
+
+func isBoardWipe(card *db.Card) bool {
 	if card.CardType != db.Instant && card.CardType != db.Sorcery {
 		return false
 	}
 
-	return boardWhipeDestroyAllRegex.MatchString(card.OracleText)
+	if BoardWipeDestroyAllRegex.MatchString(card.OracleText) {
+		return true
+	}
+
+	for _, BoardWipeCard := range BoardWipeCards {
+		if BoardWipeCard == card.Name {
+			return true
+		}
+	}
+
+	return false
 }

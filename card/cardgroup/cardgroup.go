@@ -7,8 +7,9 @@ func CalculateCardGroups(card *db.Card) {
 	card.CardGroups = []string{}
 	calculateRamp(card)
 	calculateDraw(card)
-	calculateBoardWhipes(card)
+	calculateBoardWipes(card)
 	calculateRemoval(card)
 	calculateLand(card)
+	calculateCreature(card)
 
 }
