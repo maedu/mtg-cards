@@ -15,7 +15,7 @@ import (
 
 const (
 	// Timeout operations after N seconds
-	connectTimeout = 5
+	connectTimeout = 60
 )
 
 // GetConnection Creates and returns the connection

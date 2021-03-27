@@ -21,6 +21,7 @@ var BoardWipeCards = []string{
 	"Duneblast",
 	"Toxic Deluge",
 	"Time Wipe",
+	"Ravnica at War",
 }
 
 func isBoardWipe(card *db.Card) bool {
