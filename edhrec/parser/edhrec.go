@@ -8,16 +8,7 @@ import (
 )
 
 type CommandersJSON struct {
-	Panels    Panels    `json:"panels"`
 	Container Container `json:"container"`
-}
-
-type Panels struct {
-	Card Card `json:"card"`
-}
-
-type Card struct {
-	Name string `json:"name"`
 }
 
 type Container struct {
@@ -25,7 +16,12 @@ type Container struct {
 }
 
 type JsonDict struct {
+	Card      Card       `json:"card"`
 	CardLists []CardList `json:"cardlists"`
+}
+
+type Card struct {
+	Name string `json:"name"`
 }
 
 type CardList struct {
@@ -43,7 +39,9 @@ func FetchCommander(commander string) ([]string, error) {
 		return nil, err
 	}
 
-	cards := []string{content.Panels.Card.Name}
+	cards := []string{content.Container.JsonDict.Card.Name}
+
+	log.Printf("Commander name: %s", content.Container.JsonDict.Card.Name)
 
 	for _, cardList := range content.Container.JsonDict.CardLists {
 		for _, card := range cardList.CardViews {

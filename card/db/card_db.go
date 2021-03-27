@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -258,7 +259,7 @@ func (collection *CardCollection) GetCardByName(name string) (*Card, error) {
 
 // GetCardsByNames retrieves cards by their names from the db
 func (collection *CardCollection) GetCardsByNames(names []string) ([]*Card, error) {
-	log.Println("find cards by names")
+	log.Printf("find cards by names: %d", len(names))
 	var cards []*Card = []*Card{}
 	ctx := collection.Context
 
@@ -271,7 +272,7 @@ func (collection *CardCollection) GetCardsByNames(names []string) ([]*Card, erro
 
 	cursor, err := collection.Collection.Find(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Find failed: %w", err)
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &cards)
