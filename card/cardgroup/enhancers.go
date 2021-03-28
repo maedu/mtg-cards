@@ -13,7 +13,7 @@ func calculateEnhancers(card *db.Card) {
 	}
 }
 
-var EnhancerCards = []string{
+var enhancerCards = []string{
 	"Ajani's Welcome",
 	"Crusade",
 	"Honor of the Pure",
@@ -35,8 +35,8 @@ var EnhancerCards = []string{
 }
 
 func isEnhancer(card *db.Card) bool {
-	for _, EnhancerCard := range EnhancerCards {
-		if EnhancerCard == card.Name {
+	for _, enhancerCard := range enhancerCards {
+		if enhancerCard == card.Name {
 			return true
 		}
 	}

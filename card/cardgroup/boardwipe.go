@@ -14,9 +14,9 @@ func calculateBoardWipes(card *db.Card) {
 	}
 }
 
-var BoardWipeDestroyAllRegex, _ = regexp.Compile("Destroy all")
+var boardWipeDestroyAllRegex, _ = regexp.Compile("Destroy all")
 
-var BoardWipeCards = []string{
+var boardWipeCards = []string{
 	"Cyclonic Rift",
 	"Duneblast",
 	"Toxic Deluge",
@@ -29,12 +29,12 @@ func isBoardWipe(card *db.Card) bool {
 		return false
 	}
 
-	if BoardWipeDestroyAllRegex.MatchString(card.OracleText) {
+	if boardWipeDestroyAllRegex.MatchString(card.OracleText) {
 		return true
 	}
 
-	for _, BoardWipeCard := range BoardWipeCards {
-		if BoardWipeCard == card.Name {
+	for _, boardWipeCard := range boardWipeCards {
+		if boardWipeCard == card.Name {
 			return true
 		}
 	}

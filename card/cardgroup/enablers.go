@@ -13,7 +13,7 @@ func calculateEnablers(card *db.Card) {
 	}
 }
 
-var EnablerCards = []string{
+var enablerCards = []string{
 	"Brave the Elements",
 	"Flawless Maneuver",
 	"Teferi's Protection",
@@ -23,8 +23,8 @@ var EnablerCards = []string{
 }
 
 func isEnabler(card *db.Card) bool {
-	for _, EnablerCard := range EnablerCards {
-		if EnablerCard == card.Name {
+	for _, enablerCard := range enablerCards {
+		if enablerCard == card.Name {
 			return true
 		}
 	}
