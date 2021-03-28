@@ -11,6 +11,7 @@ import (
 // Setup Setup REST API
 func Setup(r *gin.Engine) {
 	r.GET("/api/edhrec/commander/:name", handleCommander)
+	r.GET("/api/edhrec/synergy/:name", handleSynergy)
 }
 
 func handleCommander(c *gin.Context) {
@@ -42,6 +43,21 @@ func handleCommander(c *gin.Context) {
 
 	for _, card := range foundCards {
 		cards[card.Name] = card
+	}
+	c.JSON(http.StatusOK, cards)
+}
+
+func handleSynergy(c *gin.Context) {
+	name := c.Param("name")
+	edhRecCards, err := parser.FetchCommander(name)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	cards := map[string]float64{}
+	for _, edhRecCard := range edhRecCards {
+		cards[edhRecCard.Name] = edhRecCard.Synergy
 	}
 	c.JSON(http.StatusOK, cards)
 }

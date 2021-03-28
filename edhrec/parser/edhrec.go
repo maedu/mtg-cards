@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type CommandersJSON struct {
@@ -39,7 +40,12 @@ type EdhRecCard struct {
 }
 
 func FetchCommander(commander string) ([]EdhRecCard, error) {
-	url := fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en/commanders/%s.json", commander)
+	routeUrl, err := getRoute(commander)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en%s.json", routeUrl)
 	content, err := fetchUrl(url)
 	if err != nil {
 		return nil, err
@@ -64,6 +70,35 @@ func FetchCommander(commander string) ([]EdhRecCard, error) {
 	}
 
 	return cards, nil
+}
+
+func getRoute(commander string) (string, error) {
+	routeUrl := fmt.Sprintf("https://edhrec.com/api/route/?cc=%s", strings.Replace(commander, " ", "%20", -1))
+
+	log.Printf("Get Route URL: %s", routeUrl)
+
+	resp, err := http.Get(routeUrl)
+	if err != nil {
+		log.Print(err)
+		return "", fmt.Errorf("Fetching failed: %w", err)
+	}
+
+	if resp.StatusCode != 200 {
+		log.Printf("Status not 200 but %d", resp.StatusCode)
+		return "", fmt.Errorf("Status not 200 but %d", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	var res string
+	err = json.NewDecoder(resp.Body).Decode(&res)
+
+	if err != nil {
+		log.Print(err)
+		return "", err
+	}
+	log.Printf("Route URL result: %s", res)
+	return res, nil
 }
 
 func fetchUrl(url string) (CommandersJSON, error) {
