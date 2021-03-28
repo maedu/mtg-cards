@@ -29,23 +29,37 @@ type CardList struct {
 }
 
 type CardView struct {
-	Name string `json:"name"`
+	Name    string  `json:"name"`
+	Synergy float64 `json:"synergy"`
 }
 
-func FetchCommander(commander string) ([]string, error) {
+type EdhRecCard struct {
+	Name    string  `json:"name"`
+	Synergy float64 `json:"synergy"`
+}
+
+func FetchCommander(commander string) ([]EdhRecCard, error) {
 	url := fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en/commanders/%s.json", commander)
 	content, err := fetchUrl(url)
 	if err != nil {
 		return nil, err
 	}
 
-	cards := []string{content.Container.JsonDict.Card.Name}
+	cards := []EdhRecCard{
+		EdhRecCard{
+			Name:    content.Container.JsonDict.Card.Name,
+			Synergy: 0,
+		},
+	}
 
 	log.Printf("Commander name: %s", content.Container.JsonDict.Card.Name)
 
 	for _, cardList := range content.Container.JsonDict.CardLists {
 		for _, card := range cardList.CardViews {
-			cards = append(cards, card.Name)
+			cards = append(cards, EdhRecCard{
+				Name:    card.Name,
+				Synergy: card.Synergy,
+			})
 		}
 	}
 

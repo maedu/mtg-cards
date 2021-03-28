@@ -1,23 +1,21 @@
 package api
 
-
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/maedu/mtg-cards/edhrec/parser"
 	"github.com/maedu/mtg-cards/card/db"
+	"github.com/maedu/mtg-cards/edhrec/parser"
 )
 
 // Setup Setup REST API
 func Setup(r *gin.Engine) {
 	r.GET("/api/edhrec/commander/:name", handleCommander)
-
 }
 
 func handleCommander(c *gin.Context) {
 	name := c.Param("name")
-	cardNames, err := parser.FetchCommander(name)
+	edhRecCards, err := parser.FetchCommander(name)
 	if err != nil {
 		c.Error(err)
 		return
@@ -31,8 +29,10 @@ func handleCommander(c *gin.Context) {
 	defer collection.Disconnect()
 
 	cards := map[string]*db.Card{}
-	for _, name := range cardNames {
-		cards[name] = nil
+	cardNames := []string{}
+	for _, edhRecCard := range edhRecCards {
+		cards[edhRecCard.Name] = nil
+		cardNames = append(cardNames, edhRecCard.Name)
 	}
 	foundCards, err := collection.GetCardsByNames(cardNames)
 	if err != nil {

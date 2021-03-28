@@ -29,6 +29,7 @@ type FindCardsResponse struct {
 func Setup(r *gin.Engine) {
 	r.GET("/api/cards", handleGetCards)
 	r.GET("/api/cards/set", handleGetSet)
+	r.GET("/api/cards/synergy", handleGetSynergy)
 	r.POST("/api/cards/find", handleFindCards)
 	r.GET("/api/cards/update", handleUpdateCards)
 	r.GET("/api/cards/transform", handleTransformCards)
@@ -59,6 +60,17 @@ func handleGetSet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, names)
+}
+
+func handleGetSynergy(c *gin.Context) {
+
+	commander := c.Query("commander")
+	if commander == "" {
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Parameter 'commander' missing"))
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }
 
 func handleGetCards(c *gin.Context) {
@@ -124,17 +136,22 @@ func handleFindCards(c *gin.Context) {
 	cardsToFind := make([]string, len(request.Cards))
 	copy(cardsToFind, request.Cards)
 
+	var edhRecCards []parser.EdhRecCard
+
 	for _, name := range request.Cards {
 
 		// TODO improve
 		match := r.FindStringSubmatch(name)
 		if match != nil {
-			commanderCards, err := parser.FetchCommander(match[1])
+			edhRecCards, err = parser.FetchCommander(match[1])
 			if err != nil {
 				c.Error(err)
 				return
 			}
-			cardsToFind = append(cardsToFind, commanderCards...)
+
+			for _, edhRecCard := range edhRecCards {
+				cardsToFind = append(cardsToFind, edhRecCard.Name)
+			}
 
 		} else {
 			cards[name] = nil
@@ -149,6 +166,13 @@ func handleFindCards(c *gin.Context) {
 
 	for _, card := range foundCards {
 		cards[card.Name] = card
+	}
+	if edhRecCards != nil {
+		for _, edhRecCard := range edhRecCards {
+			if cards[edhRecCard.Name] != nil {
+				cards[edhRecCard.Name].Synergy = edhRecCard.Synergy
+			}
+		}
 	}
 
 	sets := map[string][]*db.Card{}
