@@ -16,6 +16,19 @@ func calculateDraw(card *db.Card) {
 
 var drawRegex, _ = regexp.Compile("(?i)Draw( [a-zA-Z]+)? card")
 
+var nonCardDraw = []string{
+	"Hullbreacher",
+}
+
 func isDraw(card *db.Card) bool {
-	return drawRegex.MatchString(card.OracleText)
+	return drawRegex.MatchString(card.OracleText) && !matchNonCardDraw(card)
+}
+
+func matchNonCardDraw(card *db.Card) bool {
+	for _, nonCardDrawCard := range nonCardDraw {
+		if nonCardDrawCard == card.Name {
+			return true
+		}
+	}
+	return false
 }
