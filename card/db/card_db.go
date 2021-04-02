@@ -189,9 +189,9 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 	}
 
 	if request.Colors != nil && len(request.Colors) > 0 {
-		filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{
+		filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{"$elemMatch": bson.M{
 			"$nin": request.Colors,
-		}}})
+		}}}})
 	}
 
 	if request.CardGroups != nil && len(request.CardGroups) > 0 {
