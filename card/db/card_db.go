@@ -72,6 +72,13 @@ type Card struct {
 	Synergy         float64            `bson:"-" json:"synergy"`
 }
 
+type CardSearchRequest struct {
+	Text       string
+	Cmc        []float64
+	Colors     []string
+	CardGroups []string
+}
+
 // CardCollection ...
 type CardCollection struct {
 	*mongo.Client
@@ -144,22 +151,19 @@ func (collection *CardCollection) GetAllCards() ([]*Card, error) {
 }
 
 // GetCardsPaginated Retrives all cards from the db
-func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, filterByFullText string) (PaginatedResult, error) {
+func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, request CardSearchRequest) (PaginatedResult, error) {
 	var cards []*Card = []*Card{}
-	filter := bson.M{}
 
-	trimmedFilterByFullText := strings.TrimSpace(filterByFullText)
+	trimmedText := strings.TrimSpace(request.Text)
 	projection := bson.M{}
 	var sort interface{} = bson.D{
 		{"name", 1},
 	}
-	if trimmedFilterByFullText != "" {
-		filter = bson.M{
-			"$text": bson.M{
-				"$search": trimmedFilterByFullText,
-			},
-		}
-
+	filters := []bson.M{}
+	if trimmedText != "" {
+		filters = append(filters, bson.M{"$text": bson.M{
+			"$search": trimmedText,
+		}})
 		projection = bson.M{
 			"score": bson.M{
 				"$meta": "textScore",
@@ -172,6 +176,39 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, fil
 			},
 		}
 	}
+
+	if request.Cmc != nil && len(request.Cmc) > 0 {
+		cmcFilter := []bson.M{}
+		for _, cmc := range request.Cmc {
+			cmcFilter = append(cmcFilter, bson.M{
+				"cmc": cmc,
+			})
+		}
+
+		filters = append(filters, bson.M{"$or": cmcFilter})
+	}
+
+	if request.Colors != nil && len(request.Colors) > 0 {
+		filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{
+			"$nin": request.Colors,
+		}}})
+	}
+
+	if request.CardGroups != nil && len(request.CardGroups) > 0 {
+		filters = append(filters, bson.M{"card_groups": bson.M{
+			"$all": request.CardGroups,
+		}})
+	}
+
+	filter := bson.M{}
+	if len(filters) > 0 {
+		filter = bson.M{
+			"$and": filters,
+		}
+	}
+
+	fmt.Printf("Filter: %v", filter)
+
 	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
 	if err != nil {
 		return PaginatedResult{}, err

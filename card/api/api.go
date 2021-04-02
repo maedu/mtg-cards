@@ -96,8 +96,6 @@ func handleGetCards(c *gin.Context) {
 		}
 	}
 
-	textSearch := c.Query("textSearch")
-
 	collection, err := db.GetCardCollection()
 	if err != nil {
 		c.Error(err)
@@ -105,7 +103,29 @@ func handleGetCards(c *gin.Context) {
 	}
 	defer collection.Disconnect()
 
-	loadedCards, err := collection.GetCardsPaginated(perPage, page, textSearch)
+	text := c.Query("text")
+	cmcText := c.QueryArray("cmc")
+	cmc := []float64{}
+	if cmcText != nil {
+		for _, item := range cmcText {
+			result, err := strconv.ParseFloat(item, 0)
+			if err != nil {
+				c.Error(err)
+				return
+			}
+			cmc = append(cmc, result)
+		}
+	}
+	colors := c.QueryArray("colors")
+	cardGroups := c.QueryArray("cardGroups")
+
+	request := db.CardSearchRequest{
+		Text:       text,
+		Cmc:        cmc,
+		Colors:     colors,
+		CardGroups: cardGroups,
+	}
+	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
 	//loadedCards, err := collection.FindCards(filterByFullText)
 	if err != nil {
 		c.Error(err)
@@ -348,6 +368,9 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 	colors := scryfallCard.Colors
 	if colors == nil {
 		colors = []string{}
+	}
+	if len(colors) == 0 {
+		colors = append(colors, "C")
 	}
 
 	card := &db.Card{
