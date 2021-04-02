@@ -90,6 +90,7 @@ func GetCardCollection() (CardCollection, error) {
 		"name":        5,
 		"oracle_text": 4,
 		"type_line":   2,
+		"card_groups": 2,
 		"set_name":    1,
 	})
 	index := mongo.IndexModel{
@@ -97,17 +98,18 @@ func GetCardCollection() (CardCollection, error) {
 			{Key: "name", Value: bsonx.String("text")},
 			{Key: "oracle_text", Value: bsonx.String("text")},
 			{Key: "type_line", Value: bsonx.String("text")},
+			{Key: "card_groups", Value: bsonx.String("text")},
 			{Key: "set_name", Value: bsonx.String("text")},
 		},
 		Options: modelOpts,
 	}
 
 	opts := options.CreateIndexes().SetMaxTime(10 * time.Second)
-	_, err := collection.Indexes().CreateOne(ctx, index, opts)
-
+	indexName, err := collection.Indexes().CreateOne(ctx, index, opts)
 	if err != nil {
 		return CardCollection{}, err
 	}
+	fmt.Printf("Index created: %s\n", indexName)
 
 	return CardCollection{
 		Client:     client,
