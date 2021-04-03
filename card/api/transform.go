@@ -162,14 +162,14 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		db.Enchantment,
 		db.Instant,
 		db.Land,
-		db.Plane,
 		db.Planeswalker,
 		db.Sorcery,
-		db.Conspiracy,
-		db.Phenomenon,
-		db.Scheme,
-		db.Tribal,
-		db.Vanguard,
+		//db.Plane,
+		//db.Conspiracy,
+		//db.Phenomenon,
+		//db.Scheme,
+		//db.Tribal,
+		//db.Vanguard,
 	}
 
 	var cardType db.CardType
@@ -177,8 +177,12 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 	for _, cardTypeToCheck := range cardTypesToCheck {
 		if strings.Contains(scryfallCard.TypeLine, string(cardTypeToCheck)) {
 			cardType = cardTypeToCheck
+
 			break
 		}
+	}
+	if cardType == "" {
+		return nil
 	}
 
 	colors := scryfallCard.Colors

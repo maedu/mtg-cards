@@ -43,32 +43,56 @@ func FetchCommander(mainCard string) ([]db.EdhrecSynergy, error) {
 	}
 
 	url := fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en%s.json", routeUrl)
+	cards, err := fetchAndParseUrl(mainCard, url)
+	if err != nil {
+		return nil, err
+	}
+
+	url = fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en%s/expensive.json", routeUrl)
+	expensiveCards, err := fetchAndParseUrl(mainCard, url)
+	if err != nil {
+		return nil, err
+	}
+	for key, card := range expensiveCards {
+		cards[key] = card
+	}
+
+	url = fmt.Sprintf("https://edhrec-json.s3.amazonaws.com/en%s/budget.json", routeUrl)
+	budgetCards, err := fetchAndParseUrl(mainCard, url)
+	if err != nil {
+		return nil, err
+	}
+	for key, card := range budgetCards {
+		cards[key] = card
+	}
+
+	allCards := []db.EdhrecSynergy{}
+	for _, card := range cards {
+		allCards = append(allCards, card)
+	}
+
+	return allCards, nil
+}
+
+func fetchAndParseUrl(mainCard string, url string) (map[string]db.EdhrecSynergy, error) {
 	content, err := fetchUrl(url)
 	if err != nil {
 		return nil, err
 	}
 
-	cards := []db.EdhrecSynergy{
-		db.EdhrecSynergy{
-			MainCard:        mainCard,
-			CardWithSynergy: content.Container.JsonDict.Card.Name,
-			Synergy:         0,
-		},
-	}
-
-	log.Printf("Commander name: %s", content.Container.JsonDict.Card.Name)
-
+	cards := map[string]db.EdhrecSynergy{}
 	for _, cardList := range content.Container.JsonDict.CardLists {
 		for _, card := range cardList.CardViews {
-			cards = append(cards, db.EdhrecSynergy{
+			cards[card.Name] = db.EdhrecSynergy{
 				MainCard:        mainCard,
 				CardWithSynergy: card.Name,
 				Synergy:         card.Synergy,
-			})
+			}
 		}
 	}
 
 	return cards, nil
+
 }
 
 func getRoute(commander string) (string, error) {

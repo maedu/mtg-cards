@@ -24,8 +24,8 @@ func handleSynergy(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-
 	edhRecCards, err := collection.GetEdhrecSynergysByMainCard(mainCard)
+	collection.Disconnect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -37,6 +37,7 @@ func handleSynergy(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
+		collection, err = edhrecDB.GetEdhrecSynergyCollection()
 		err = collection.ReplaceAllOfMainCard(mainCard, edhRecCards)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err)
