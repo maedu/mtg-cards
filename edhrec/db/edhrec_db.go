@@ -11,6 +11,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Synergy struct {
+	CardWithSynergyTo string  `bson:"card_with_synergy_to" json:"cardWithSynergyTo"`
+	Synergy           float64 `bson:"synergy" json:"synergy"`
+}
+
+type EdhrecSynergy2 struct {
+	ID        string    `bson:"_id" json:"id"`
+	Name      string    `bson:"name" json:"name"`
+	Synergies []Synergy `bson:"synergies" json:"synergies"`
+}
 type EdhrecSynergy struct {
 	ID              string  `bson:"_id" json:"id"`
 	MainCard        string  `bson:"main_card" json:"mainCard"`

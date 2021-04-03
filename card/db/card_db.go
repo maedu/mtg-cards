@@ -69,14 +69,16 @@ type Card struct {
 	IsCommander     bool               `bson:"is_commander" json:"isCommander"`
 	SearchText      string             `bson:"search_text" json:"searchText"`
 	CardGroups      []string           `bson:"card_groups" json:"cardGroups"`
-	Synergy         float64            `bson:"-" json:"synergy"`
+	Synergies       map[string]float64 `bson:"synergies" json:"-"` // All known synergies for this card
+	Synergy         float64            `bson:"-" json:"synergy"`   // Synergy for the REST call, in relation to a specific card
 }
 
 type CardSearchRequest struct {
-	Text       string
-	Cmc        []float64
-	Colors     []string
-	CardGroups []string
+	Text               string
+	Cmc                []float64
+	Colors             []string
+	CardGroups         []string
+	MainCardForSynergy string
 }
 
 // CardCollection ...

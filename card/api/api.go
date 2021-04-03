@@ -120,11 +120,14 @@ func handleGetCards(c *gin.Context) {
 	colors := c.QueryArray("colors")
 	cardGroups := c.QueryArray("cardGroups")
 
+	mainCardForSynergy := c.Query("mainCardForSynergy")
+
 	request := db.CardSearchRequest{
-		Text:       text,
-		Cmc:        cmc,
-		Colors:     colors,
-		CardGroups: cardGroups,
+		Text:               text,
+		Cmc:                cmc,
+		Colors:             colors,
+		CardGroups:         cardGroups,
+		MainCardForSynergy: mainCardForSynergy,
 	}
 	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
 	//loadedCards, err := collection.FindCards(filterByFullText)
