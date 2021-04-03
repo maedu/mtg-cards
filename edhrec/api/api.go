@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/db"
+	edhrecDB "github.com/maedu/mtg-cards/edhrec/db"
 	"github.com/maedu/mtg-cards/edhrec/parser"
 )
 
@@ -32,8 +33,8 @@ func handleCommander(c *gin.Context) {
 	cards := map[string]*db.Card{}
 	cardNames := []string{}
 	for _, edhRecCard := range edhRecCards {
-		cards[edhRecCard.Name] = nil
-		cardNames = append(cardNames, edhRecCard.Name)
+		cards[edhRecCard.CardWithSynergy] = nil
+		cardNames = append(cardNames, edhRecCard.CardWithSynergy)
 	}
 	foundCards, err := collection.GetCardsByNames(cardNames)
 	if err != nil {
@@ -48,8 +49,13 @@ func handleCommander(c *gin.Context) {
 }
 
 func handleSynergy(c *gin.Context) {
-	name := c.Param("name")
-	edhRecCards, err := parser.FetchCommander(name)
+	mainCard := c.Param("name")
+	edhRecCards, err := parser.FetchCommander(mainCard)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	err = storeSynergyInDb(mainCard, edhRecCards)
 	if err != nil {
 		c.Error(err)
 		return
@@ -57,7 +63,13 @@ func handleSynergy(c *gin.Context) {
 
 	cards := map[string]float64{}
 	for _, edhRecCard := range edhRecCards {
-		cards[edhRecCard.Name] = edhRecCard.Synergy
+		cards[edhRecCard.CardWithSynergy] = edhRecCard.Synergy
 	}
 	c.JSON(http.StatusOK, cards)
+}
+
+func storeSynergyInDb(mainCard string, edhRecCards []edhrecDB.EdhrecSynergy) error {
+	collection := edhrecDB.GetEdhrecSynergyCollection()
+	defer collection.Disconnect()
+	return collection.ReplaceAllOfMainCard(mainCard, edhRecCards)
 }

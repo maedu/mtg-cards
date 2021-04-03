@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/maedu/mtg-cards/edhrec/db"
 )
 
 type CommandersJSON struct {
@@ -34,13 +36,8 @@ type CardView struct {
 	Synergy float64 `json:"synergy"`
 }
 
-type EdhRecCard struct {
-	Name    string  `json:"name"`
-	Synergy float64 `json:"synergy"`
-}
-
-func FetchCommander(commander string) ([]EdhRecCard, error) {
-	routeUrl, err := getRoute(commander)
+func FetchCommander(mainCard string) ([]db.EdhrecSynergy, error) {
+	routeUrl, err := getRoute(mainCard)
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +48,11 @@ func FetchCommander(commander string) ([]EdhRecCard, error) {
 		return nil, err
 	}
 
-	cards := []EdhRecCard{
-		EdhRecCard{
-			Name:    content.Container.JsonDict.Card.Name,
-			Synergy: 0,
+	cards := []db.EdhrecSynergy{
+		db.EdhrecSynergy{
+			MainCard:        mainCard,
+			CardWithSynergy: content.Container.JsonDict.Card.Name,
+			Synergy:         0,
 		},
 	}
 
@@ -62,9 +60,10 @@ func FetchCommander(commander string) ([]EdhRecCard, error) {
 
 	for _, cardList := range content.Container.JsonDict.CardLists {
 		for _, card := range cardList.CardViews {
-			cards = append(cards, EdhRecCard{
-				Name:    card.Name,
-				Synergy: card.Synergy,
+			cards = append(cards, db.EdhrecSynergy{
+				MainCard:        mainCard,
+				CardWithSynergy: card.Name,
+				Synergy:         card.Synergy,
 			})
 		}
 	}

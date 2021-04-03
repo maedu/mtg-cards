@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/cardgroup"
 	"github.com/maedu/mtg-cards/card/db"
+	edhrecDB "github.com/maedu/mtg-cards/edhrec/db"
 	"github.com/maedu/mtg-cards/edhrec/parser"
 	"github.com/maedu/mtg-cards/scryfall/client"
 	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
@@ -156,21 +157,21 @@ func handleFindCards(c *gin.Context) {
 	cardsToFind := make([]string, len(request.Cards))
 	copy(cardsToFind, request.Cards)
 
-	var edhRecCards []parser.EdhRecCard
+	var edhRecSynergies []edhrecDB.EdhrecSynergy
 
 	for _, name := range request.Cards {
 
 		// TODO improve
 		match := r.FindStringSubmatch(name)
 		if match != nil {
-			edhRecCards, err = parser.FetchCommander(match[1])
+			edhRecSynergies, err = parser.FetchCommander(match[1])
 			if err != nil {
 				c.Error(err)
 				return
 			}
 
-			for _, edhRecCard := range edhRecCards {
-				cardsToFind = append(cardsToFind, edhRecCard.Name)
+			for _, edhRecSynergy := range edhRecSynergies {
+				cardsToFind = append(cardsToFind, edhRecSynergy.CardWithSynergy)
 			}
 
 		} else {
@@ -187,10 +188,10 @@ func handleFindCards(c *gin.Context) {
 	for _, card := range foundCards {
 		cards[card.Name] = card
 	}
-	if edhRecCards != nil {
-		for _, edhRecCard := range edhRecCards {
-			if cards[edhRecCard.Name] != nil {
-				cards[edhRecCard.Name].Synergy = edhRecCard.Synergy
+	if edhRecSynergies != nil {
+		for _, edhRecSynergy := range edhRecSynergies {
+			if cards[edhRecSynergy.CardWithSynergy] != nil {
+				cards[edhRecSynergy.CardWithSynergy].Synergy = edhRecSynergy.Synergy
 			}
 		}
 	}
