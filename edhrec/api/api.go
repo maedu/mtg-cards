@@ -52,24 +52,28 @@ func handleSynergy(c *gin.Context) {
 	mainCard := c.Param("name")
 	update := c.Query("update")
 
-	collection := edhrecDB.GetEdhrecSynergyCollection()
+	collection, err := edhrecDB.GetEdhrecSynergyCollection()
 	defer collection.Disconnect()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
 
 	edhRecCards, err := collection.GetEdhrecSynergysByMainCard(mainCard)
 	if err != nil {
-		c.Error(err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	if len(edhRecCards) == 0 || update != "" {
 		edhRecCards, err := parser.FetchCommander(mainCard)
 		if err != nil {
-			c.Error(err)
+			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
 		err = collection.ReplaceAllOfMainCard(mainCard, edhRecCards)
 		if err != nil {
-			c.Error(err)
+			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
 	}

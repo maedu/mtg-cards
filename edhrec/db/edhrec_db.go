@@ -27,17 +27,24 @@ type EdhrecSynergyCollection struct {
 }
 
 // GetEdhrecSynergyCollection ...
-func GetEdhrecSynergyCollection() EdhrecSynergyCollection {
+func GetEdhrecSynergyCollection() (EdhrecSynergyCollection, error) {
 	client, ctx, cancel := db.GetConnection()
 	db := client.Database(db.GetDatabaseName())
 	collection := db.Collection("edhrec_synergies")
+
+	model := mongo.IndexModel{
+		Keys: bson.M{
+			"main_card": 1,
+		}, Options: nil,
+	}
+	_, err := collection.Indexes().CreateOne(ctx, model)
 
 	return EdhrecSynergyCollection{
 		Client:     client,
 		Collection: collection,
 		Context:    ctx,
 		CancelFunc: cancel,
-	}
+	}, err
 }
 
 // Disconnect ...
