@@ -50,15 +50,28 @@ func handleCommander(c *gin.Context) {
 
 func handleSynergy(c *gin.Context) {
 	mainCard := c.Param("name")
-	edhRecCards, err := parser.FetchCommander(mainCard)
+	update := c.Query("update")
+
+	collection := edhrecDB.GetEdhrecSynergyCollection()
+	defer collection.Disconnect()
+
+	edhRecCards, err := collection.GetEdhrecSynergysByMainCard(mainCard)
 	if err != nil {
 		c.Error(err)
 		return
 	}
-	err = storeSynergyInDb(mainCard, edhRecCards)
-	if err != nil {
-		c.Error(err)
-		return
+
+	if len(edhRecCards) == 0 || update != "" {
+		edhRecCards, err := parser.FetchCommander(mainCard)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		err = collection.ReplaceAllOfMainCard(mainCard, edhRecCards)
+		if err != nil {
+			c.Error(err)
+			return
+		}
 	}
 
 	cards := map[string]float64{}
@@ -66,10 +79,4 @@ func handleSynergy(c *gin.Context) {
 		cards[edhRecCard.CardWithSynergy] = edhRecCard.Synergy
 	}
 	c.JSON(http.StatusOK, cards)
-}
-
-func storeSynergyInDb(mainCard string, edhRecCards []edhrecDB.EdhrecSynergy) error {
-	collection := edhrecDB.GetEdhrecSynergyCollection()
-	defer collection.Disconnect()
-	return collection.ReplaceAllOfMainCard(mainCard, edhRecCards)
 }

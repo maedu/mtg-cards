@@ -47,7 +47,7 @@ func (collection *EdhrecSynergyCollection) Disconnect() {
 }
 
 // GetEdhrecSynergysByMainCard retrieves edhrecsynergys by their main card from the db
-func (collection *EdhrecSynergyCollection) GetEdhrecSynergysByMainCard(mainCard string) (*[]EdhrecSynergy, error) {
+func (collection *EdhrecSynergyCollection) GetEdhrecSynergysByMainCard(mainCard string) ([]EdhrecSynergy, error) {
 	ctx := collection.Context
 	var edhrecsynergys []EdhrecSynergy = []EdhrecSynergy{}
 	cursor, err := collection.Collection.Find(ctx, bson.D{bson.E{Key: "main_card", Value: mainCard}})
@@ -60,7 +60,7 @@ func (collection *EdhrecSynergyCollection) GetEdhrecSynergysByMainCard(mainCard 
 		log.Printf("Failed marshalling %v", err)
 		return nil, err
 	}
-	return &edhrecsynergys, nil
+	return edhrecsynergys, nil
 
 }
 
