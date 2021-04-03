@@ -23,7 +23,7 @@ func handleUpdateCards(c *gin.Context) {
 		return
 	}
 
-	err = transformCards()
+	err = TransformCards()
 	if err != nil {
 		c.Error(err)
 		return
@@ -35,9 +35,9 @@ func handleUpdateCards(c *gin.Context) {
 
 func handleTransformCards(c *gin.Context) {
 
-	err := transformCards()
+	err := TransformCards()
 	if err != nil {
-		c.Error(err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -45,7 +45,7 @@ func handleTransformCards(c *gin.Context) {
 
 }
 
-func transformCards() error {
+func TransformCards() error {
 
 	log.Println("Get scryfallCollection")
 	scryfallCollection := scryfallDB.GetScryfallCardCollection()

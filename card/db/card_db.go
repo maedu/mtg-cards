@@ -69,8 +69,7 @@ type Card struct {
 	IsCommander     bool               `bson:"is_commander" json:"isCommander"`
 	SearchText      string             `bson:"search_text" json:"searchText"`
 	CardGroups      []string           `bson:"card_groups" json:"cardGroups"`
-	Synergies       map[string]float64 `bson:"synergies" json:"-"` // All known synergies for this card
-	Synergy         float64            `bson:"-" json:"synergy"`   // Synergy for the REST call, in relation to a specific card
+	Synergies       map[string]float64 `bson:"synergies" json:"synergies"`
 }
 
 type CardSearchRequest struct {
@@ -197,9 +196,26 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 	}
 
 	if request.CardGroups != nil && len(request.CardGroups) > 0 {
-		filters = append(filters, bson.M{"card_groups": bson.M{
-			"$all": request.CardGroups,
-		}})
+		cardGroups := []string{}
+		synergyFound := false
+		for _, cardGroup := range request.CardGroups {
+			if cardGroup == "Synergy" {
+				synergyFound = true
+			} else {
+				cardGroups = append(cardGroups, cardGroup)
+			}
+		}
+
+		if len(cardGroups) > 0 {
+			filters = append(filters, bson.M{"card_groups": bson.M{
+				"$all": cardGroups,
+			}})
+		}
+
+		if synergyFound {
+			// Filter for synergy
+
+		}
 	}
 
 	filter := bson.M{}

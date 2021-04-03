@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/db"
-	edhrecDB "github.com/maedu/mtg-cards/edhrec/db"
-	"github.com/maedu/mtg-cards/edhrec/parser"
 )
 
 type FindCardsRequest struct {
@@ -26,7 +23,6 @@ type FindCardsResponse struct {
 func Setup(r *gin.Engine) {
 	r.GET("/api/cards", handleGetCards)
 	r.GET("/api/cards/set", handleGetSet)
-	r.GET("/api/cards/synergy", handleGetSynergy)
 	r.POST("/api/cards/find", handleFindCards)
 	r.GET("/api/cards/update", handleUpdateCards)
 	r.GET("/api/cards/transform", handleTransformCards)
@@ -57,17 +53,6 @@ func handleGetSet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, names)
-}
-
-func handleGetSynergy(c *gin.Context) {
-
-	commander := c.Query("commander")
-	if commander == "" {
-		c.JSON(http.StatusBadRequest, fmt.Sprintf("Parameter 'commander' missing"))
-		return
-	}
-
-	c.JSON(http.StatusOK, nil)
 }
 
 func handleGetCards(c *gin.Context) {
@@ -151,32 +136,12 @@ func handleFindCards(c *gin.Context) {
 	defer collection.Disconnect()
 
 	cards := map[string]*db.Card{}
-	r := regexp.MustCompile(`https://edhrec.com/commanders/(.+)$`)
 
 	cardsToFind := make([]string, len(request.Cards))
 	copy(cardsToFind, request.Cards)
 
-	var edhRecSynergies []edhrecDB.EdhrecSynergy
-
 	for _, name := range request.Cards {
-
-		// TODO improve
-		match := r.FindStringSubmatch(name)
-		if match != nil {
-			edhRecSynergies, err = parser.FetchCommander(match[1])
-			if err != nil {
-				c.Error(err)
-				return
-			}
-
-			for _, edhRecSynergy := range edhRecSynergies {
-				cardsToFind = append(cardsToFind, edhRecSynergy.CardWithSynergy)
-			}
-
-		} else {
-			cards[name] = nil
-		}
-
+		cards[name] = nil
 	}
 	foundCards, err := collection.GetCardsByNames(cardsToFind)
 	if err != nil {
@@ -186,13 +151,6 @@ func handleFindCards(c *gin.Context) {
 
 	for _, card := range foundCards {
 		cards[card.Name] = card
-	}
-	if edhRecSynergies != nil {
-		for _, edhRecSynergy := range edhRecSynergies {
-			if cards[edhRecSynergy.CardWithSynergy] != nil {
-				cards[edhRecSynergy.CardWithSynergy].Synergy = edhRecSynergy.Synergy
-			}
-		}
 	}
 
 	sets := map[string][]*db.Card{}
