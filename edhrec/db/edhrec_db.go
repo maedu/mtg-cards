@@ -63,6 +63,24 @@ func (collection *EdhrecSynergyCollection) Disconnect() {
 	collection.Client.Disconnect(collection.Context)
 }
 
+// GetAllEdhrecSynergys Retrives all edhrecsynergys from the db
+func (collection *EdhrecSynergyCollection) GetAllEdhrecSynergys() ([]*EdhrecSynergy, error) {
+	var edhrecsynergys []*EdhrecSynergy = []*EdhrecSynergy{}
+	ctx := collection.Context
+
+	cursor, err := collection.Collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &edhrecsynergys)
+	if err != nil {
+		log.Printf("Failed marshalling %v", err)
+		return nil, err
+	}
+	return edhrecsynergys, nil
+}
+
 // GetEdhrecSynergysByMainCard retrieves edhrecsynergys by their main card from the db
 func (collection *EdhrecSynergyCollection) GetEdhrecSynergysByMainCard(mainCard string) ([]EdhrecSynergy, error) {
 	ctx := collection.Context

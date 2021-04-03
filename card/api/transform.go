@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/cardgroup"
 	"github.com/maedu/mtg-cards/card/db"
+	edhrecDB "github.com/maedu/mtg-cards/edhrec/db"
 	"github.com/maedu/mtg-cards/scryfall/client"
 	scryfallDB "github.com/maedu/mtg-cards/scryfall/db"
 )
@@ -50,16 +51,30 @@ func transformCards() error {
 	scryfallCollection := scryfallDB.GetScryfallCardCollection()
 	defer scryfallCollection.Disconnect()
 
-	var loadedScryfallCards, err = scryfallCollection.GetAllScryfallCards()
+	loadedScryfallCards, err := scryfallCollection.GetAllScryfallCards()
+	if err != nil {
+		return err
+	}
+
+	edhrecSynergyCollection, err := edhrecDB.GetEdhrecSynergyCollection()
+	defer edhrecSynergyCollection.Disconnect()
 
 	if err != nil {
 		return err
+	}
+	edhSynergies, err := edhrecSynergyCollection.GetAllEdhrecSynergys()
+	synergies := map[string]map[string]float64{}
+	for _, edhSynergy := range edhSynergies {
+		if synergies[edhSynergy.CardWithSynergy] == nil {
+			synergies[edhSynergy.CardWithSynergy] = map[string]float64{}
+		}
+		synergies[edhSynergy.CardWithSynergy][edhSynergy.MainCard] = edhSynergy.Synergy
 	}
 
 	cards := []*db.Card{}
 	log.Println("Transform cards")
 	for _, scryfallCard := range loadedScryfallCards {
-		card := transformCard(scryfallCard)
+		card := transformCard(scryfallCard, &synergies)
 		if card != nil {
 			cards = append(cards, card)
 		}
@@ -76,7 +91,7 @@ func transformCards() error {
 	return err
 }
 
-func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
+func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]map[string]float64) *db.Card {
 
 	switch scryfallCard.Layout {
 	case "art_series", "token", "emblem":
@@ -113,7 +128,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 
 	cardFaces := []db.Card{}
 	for _, scryfallCardFace := range scryfallCard.CardFaces {
-		cardFace := transformCard(&scryfallCardFace)
+		cardFace := transformCard(&scryfallCardFace, synergies)
 		if cardFace != nil {
 			cardFaces = append(cardFaces, *cardFace)
 		}
@@ -174,6 +189,13 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		colors = append(colors, "C")
 	}
 
+	var cardSynergies map[string]float64
+	if synergy, ok := (*synergies)[scryfallCard.Name]; ok {
+		cardSynergies = synergy
+	} else {
+		cardSynergies = map[string]float64{}
+	}
+
 	card := &db.Card{
 		ScryfallID:      scryfallCard.ID,
 		Name:            scryfallCard.Name,
@@ -197,6 +219,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard) *db.Card {
 		CardFaces:       cardFaces,
 		IsCommander:     isCommander,
 		SearchText:      searchText,
+		Synergies:       cardSynergies,
 	}
 
 	cardgroup.CalculateCardGroups(card)
