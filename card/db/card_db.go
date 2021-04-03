@@ -214,7 +214,9 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 
 		if synergyFound {
 			// Filter for synergy
-
+			filters = append(filters, bson.M{"synergies." + request.MainCardForSynergy: bson.M{
+				"$gte": 0.2,
+			}})
 		}
 	}
 
