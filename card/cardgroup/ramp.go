@@ -8,6 +8,9 @@ import (
 )
 
 func calculateRamp(card *db.Card) {
+	if isNonRampCard(card) {
+		return
+	}
 	if hasRampText(card) || isRampCard(card) {
 		card.CardGroups = append(card.CardGroups, "Ramp")
 		card.SearchText = fmt.Sprintf("%s, ramp", card.SearchText)
@@ -23,6 +26,10 @@ var rampCards = []string{
 	"Horizon Stone",
 }
 
+var nonRampCards = []string{
+	"Path to Exile",
+}
+
 func hasRampText(card *db.Card) bool {
 	if card.CardType == db.Land {
 		return false
@@ -34,6 +41,15 @@ func hasRampText(card *db.Card) bool {
 func isRampCard(card *db.Card) bool {
 	for _, rampCard := range rampCards {
 		if rampCard == card.Name {
+			return true
+		}
+	}
+	return false
+}
+
+func isNonRampCard(card *db.Card) bool {
+	for _, nonRampCard := range nonRampCards {
+		if nonRampCard == card.Name {
 			return true
 		}
 	}
