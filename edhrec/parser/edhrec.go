@@ -135,8 +135,8 @@ func fetchUrl(url string) (CommandersJSON, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		log.Printf("Status not 200 but %d", resp.StatusCode)
-		return CommandersJSON{}, fmt.Errorf("Status not 200 but %d", resp.StatusCode)
+		log.Printf("Status not 200 but %d. Return empty response.", resp.StatusCode)
+		return CommandersJSON{}, nil
 	}
 
 	defer resp.Body.Close()
