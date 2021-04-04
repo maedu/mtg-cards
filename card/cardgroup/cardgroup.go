@@ -14,5 +14,6 @@ func CalculateCardGroups(card *db.Card) {
 	calculateStandalone(card)
 	calculateEnhancers(card)
 	calculateEnablers(card)
+	calculateCommander(card)
 
 }
