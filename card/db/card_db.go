@@ -73,11 +73,12 @@ type Card struct {
 }
 
 type CardSearchRequest struct {
-	Text               string
-	Cmc                []float64
-	Colors             []string
-	CardGroups         []string
-	MainCardForSynergy string
+	Text                    string
+	Cmc                     []float64
+	Colors                  []string
+	CardGroups              []string
+	MainCardForSynergy      string
+	SearchRelatedToMainCard bool
 }
 
 // CardCollection ...
@@ -224,6 +225,12 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 				"$gte": 0.2,
 			}})
 		}
+	}
+
+	if request.SearchRelatedToMainCard {
+		filters = append(filters, bson.M{"synergies." + request.MainCardForSynergy: bson.M{
+			"$exists": true,
+		}})
 	}
 
 	filter := bson.M{}

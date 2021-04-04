@@ -102,13 +102,15 @@ func handleGetCards(c *gin.Context) {
 	cardGroups := c.QueryArray("cardGroups")
 
 	mainCardForSynergy := c.Query("mainCardForSynergy")
+	searchRelatedToMainCard := c.Query("searchRelatedToMainCard") == "true"
 
 	request := db.CardSearchRequest{
-		Text:               text,
-		Cmc:                cmc,
-		Colors:             colors,
-		CardGroups:         cardGroups,
-		MainCardForSynergy: mainCardForSynergy,
+		Text:                    text,
+		Cmc:                     cmc,
+		Colors:                  colors,
+		CardGroups:              cardGroups,
+		MainCardForSynergy:      mainCardForSynergy,
+		SearchRelatedToMainCard: searchRelatedToMainCard,
 	}
 	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
 	//loadedCards, err := collection.FindCards(filterByFullText)
