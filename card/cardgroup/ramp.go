@@ -28,12 +28,16 @@ var rampCards = []string{
 
 var nonRampCards = []string{
 	"Path to Exile",
+	"Settle the Wreckage",
+	"Imprisoned in the Moon",
+	"Abundant Growth",
+	"Urban Utopia",
 }
 
 func hasRampText(card *db.Card) bool {
 	for _, cardType := range card.CardTypes {
 		if cardType == db.Land {
-			return true
+			return false
 		}
 	}
 

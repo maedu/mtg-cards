@@ -15,8 +15,9 @@ func calculateRemoval(card *db.Card) {
 }
 
 var removalDestroyTargetRegex, _ = regexp.Compile("(?i)Destroy target")
+var removalLosesAllAbilities, _ = regexp.Compile("(?i)loses all abilities")
 
-var removalExile, _ = regexp.Compile("(?i)exile( another)? target")
+var removalExile, _ = regexp.Compile("(?i)exile( another| up to \\w+)? target")
 var removalExileGraveyard, _ = regexp.Compile("(?i)exile( another)? target([^.])+graveyard")
 
 var removalCards = []string{}
@@ -28,6 +29,10 @@ func isRemoval(card *db.Card) bool {
 	if removalExile.MatchString(card.OracleText) {
 		return !removalExileGraveyard.MatchString(card.OracleText)
 	}
+	if removalLosesAllAbilities.MatchString(card.OracleText) {
+		return true
+	}
+
 	for _, removalCard := range removalCards {
 		if removalCard == card.Name {
 			return true

@@ -14,7 +14,7 @@ func calculateDraw(card *db.Card) {
 	}
 }
 
-var drawRegex, _ = regexp.Compile("(?i)Draw( [a-zA-Z]+)? card")
+var drawRegex, _ = regexp.Compile("(?i)Draw( [a-zA-Z]+| that many)? card")
 
 var nonCardDraw = []string{
 	"Hullbreacher",
