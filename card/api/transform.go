@@ -72,9 +72,10 @@ func TransformCards() error {
 	}
 
 	cards := []*db.Card{}
+	priceMap := getPriceMap(loadedScryfallCards)
 	log.Println("Transform cards")
 	for _, scryfallCard := range loadedScryfallCards {
-		card := transformCard(scryfallCard, &synergies)
+		card := transformCard(scryfallCard, &synergies, &priceMap, nil)
 		if card != nil {
 			cards = append(cards, card)
 		}
@@ -91,11 +92,67 @@ func TransformCards() error {
 	return err
 }
 
-func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]map[string]float64) *db.Card {
+func getPriceMap(loadedScryfallCards []*scryfallDB.ScryfallCard) map[scryfallDB.Currency]float64 {
+	highestPrices := map[scryfallDB.Currency]float64{}
+	var missing bool
+	for _, scryfallCard := range loadedScryfallCards {
+		prices := map[scryfallDB.Currency]float64{}
+		missing = false
+		for currency, currencyPrice := range scryfallCard.Prices {
+			prices[currency] = parseAmount(currencyPrice)
+			if prices[currency] == 0.0 {
+				missing = true
+				break
+			}
+		}
+		if !missing {
+			if highestPrices == nil || prices[scryfallDB.USD] > highestPrices[scryfallDB.USD] {
+				highestPrices = prices
+			}
+		}
+	}
+	priceMap := map[scryfallDB.Currency]float64{}
+	priceMap[scryfallDB.USD] = 1.0
+	priceMap[scryfallDB.EUR] = highestPrices[scryfallDB.USD] / highestPrices[scryfallDB.EUR]
+	priceMap[scryfallDB.TIX] = highestPrices[scryfallDB.USD] / highestPrices[scryfallDB.TIX]
+	fmt.Printf("pricemAP: %v", priceMap)
+
+	return priceMap
+}
+
+func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]map[string]float64, priceMap *map[scryfallDB.Currency]float64, parentCard *scryfallDB.ScryfallCard) *db.Card {
 
 	switch scryfallCard.Layout {
-	case "art_series", "token", "emblem":
+	case "art_series", "token", "double_faced_token", "emblem":
 		// Ignore those types
+		return nil
+	}
+
+	cardTypesToCheck := []db.CardType{
+		db.Creature,
+		db.Artifact,
+		db.Enchantment,
+		db.Instant,
+		db.Land,
+		db.Planeswalker,
+		db.Sorcery,
+		//db.Plane,
+		//db.Conspiracy,
+		//db.Phenomenon,
+		//db.Scheme,
+		//db.Tribal,
+		//db.Vanguard,
+	}
+
+	var cardType db.CardType
+
+	for _, cardTypeToCheck := range cardTypesToCheck {
+		if strings.Contains(scryfallCard.TypeLine, string(cardTypeToCheck)) {
+			cardType = cardTypeToCheck
+			break
+		}
+	}
+	if cardType == "" {
 		return nil
 	}
 
@@ -119,16 +176,9 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		}
 	}
 
-	price := 0.0
-	for currency, currencyPrice := range scryfallCard.Prices {
-		if currency == scryfallDB.USD {
-			price = parseAmount(currencyPrice)
-		}
-	}
-
 	cardFaces := []db.Card{}
 	for _, scryfallCardFace := range scryfallCard.CardFaces {
-		cardFace := transformCard(&scryfallCardFace, synergies)
+		cardFace := transformCard(&scryfallCardFace, synergies, priceMap, scryfallCard)
 		if cardFace != nil {
 			cardFaces = append(cardFaces, *cardFace)
 		}
@@ -156,35 +206,6 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		commanderText,
 	))
 
-	cardTypesToCheck := []db.CardType{
-		db.Creature,
-		db.Artifact,
-		db.Enchantment,
-		db.Instant,
-		db.Land,
-		db.Planeswalker,
-		db.Sorcery,
-		//db.Plane,
-		//db.Conspiracy,
-		//db.Phenomenon,
-		//db.Scheme,
-		//db.Tribal,
-		//db.Vanguard,
-	}
-
-	var cardType db.CardType
-
-	for _, cardTypeToCheck := range cardTypesToCheck {
-		if strings.Contains(scryfallCard.TypeLine, string(cardTypeToCheck)) {
-			cardType = cardTypeToCheck
-
-			break
-		}
-	}
-	if cardType == "" {
-		return nil
-	}
-
 	colors := scryfallCard.Colors
 	if colors == nil {
 		colors = []string{}
@@ -198,6 +219,28 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		cardSynergies = synergy
 	} else {
 		cardSynergies = map[string]float64{}
+	}
+
+	price := 0.0
+	if parentCard == nil {
+		prices := map[scryfallDB.Currency]float64{}
+		for currency, currencyPrice := range scryfallCard.Prices {
+			prices[currency] = parseAmount(currencyPrice)
+		}
+		if prices[scryfallDB.USD] > 0.0 {
+			//log.Printf("All prices %s: %v", scryfallCard.Name, prices)
+			price = prices[scryfallDB.USD]
+		} else if prices[scryfallDB.EUR] > 0.0 {
+			price = prices[scryfallDB.EUR] * (*priceMap)[scryfallDB.EUR]
+		} else if prices[scryfallDB.USD_FOIL] > 0.0 {
+			price = prices[scryfallDB.USD_FOIL]
+		} else if prices[scryfallDB.EUR_FOIL] > 0.0 {
+			price = prices[scryfallDB.EUR_FOIL] * (*priceMap)[scryfallDB.EUR]
+		} else if prices[scryfallDB.TIX] > 0.0 {
+			price = prices[scryfallDB.TIX] * (*priceMap)[scryfallDB.TIX]
+		} else {
+			fmt.Printf("No price found for %s: %v, \n\n", scryfallCard.Name, scryfallCard)
+		}
 	}
 
 	card := &db.Card{

@@ -17,7 +17,12 @@ const (
 	Normal    string    = "normal"
 	Commander GameType  = "commander"
 	Legal     LegalText = "legal"
-	USD       Currency  = "usd"
+
+	USD      Currency = "usd"
+	EUR      Currency = "eur"
+	USD_FOIL Currency = "usd_foil"
+	EUR_FOIL Currency = "eur_foil"
+	TIX      Currency = "tix"
 )
 
 type ScryfallCard struct {
