@@ -104,6 +104,25 @@ func handleGetCards(c *gin.Context) {
 	mainCardForSynergy := c.Query("mainCardForSynergy")
 	searchRelatedToMainCard := c.Query("searchRelatedToMainCard") == "true"
 
+	priceMinString := c.Query("priceMin")
+	priceMin := db.PriceFilterSkipped
+	if priceMinString != "" {
+		priceMin, err = strconv.ParseFloat(priceMinString, 0)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+	}
+	priceMaxString := c.Query("priceMax")
+	priceMax := db.PriceFilterSkipped
+	if priceMaxString != "" {
+		priceMax, err = strconv.ParseFloat(priceMaxString, 0)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+	}
+
 	request := db.CardSearchRequest{
 		Text:                    text,
 		Cmc:                     cmc,
@@ -111,6 +130,8 @@ func handleGetCards(c *gin.Context) {
 		CardGroups:              cardGroups,
 		MainCardForSynergy:      mainCardForSynergy,
 		SearchRelatedToMainCard: searchRelatedToMainCard,
+		PriceMin:                priceMin,
+		PriceMax:                priceMax,
 	}
 	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
 	//loadedCards, err := collection.FindCards(filterByFullText)

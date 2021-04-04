@@ -41,6 +41,8 @@ const (
 	Sorcery      CardType = "Sorcery"
 	Tribal       CardType = "Tribal"
 	Vanguard     CardType = "Vanguard"
+
+	PriceFilterSkipped float64 = -10
 )
 
 type Card struct {
@@ -79,6 +81,8 @@ type CardSearchRequest struct {
 	CardGroups              []string
 	MainCardForSynergy      string
 	SearchRelatedToMainCard bool
+	PriceMin                float64
+	PriceMax                float64
 }
 
 // CardCollection ...
@@ -230,6 +234,18 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 	if request.SearchRelatedToMainCard {
 		filters = append(filters, bson.M{"synergies." + request.MainCardForSynergy: bson.M{
 			"$exists": true,
+		}})
+	}
+
+	if request.PriceMin > PriceFilterSkipped {
+		filters = append(filters, bson.M{"price": bson.M{
+			"$gte": request.PriceMin,
+		}})
+	}
+
+	if request.PriceMax > PriceFilterSkipped {
+		filters = append(filters, bson.M{"price": bson.M{
+			"$lte": request.PriceMax,
 		}})
 	}
 
