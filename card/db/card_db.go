@@ -55,7 +55,7 @@ type Card struct {
 	ManaCost        string             `json:"manaCost"`
 	Cmc             float64            `json:"cmc"`
 	TypeLine        string             `bson:"type_line" json:"typeLine"`
-	CardType        CardType           `bson:"card_type" json:"cardType"`
+	CardTypes       []CardType         `bson:"card_types" json:"cardTypes"`
 	OracleText      string             `bson:"oracle_text" json:"oracleText"`
 	Colors          []string           `json:"colors"`
 	ColorIdentity   []string           `json:"colorIdentity"`

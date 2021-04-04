@@ -31,8 +31,10 @@ var nonRampCards = []string{
 }
 
 func hasRampText(card *db.Card) bool {
-	if card.CardType == db.Land {
-		return false
+	for _, cardType := range card.CardTypes {
+		if cardType == db.Land {
+			return true
+		}
 	}
 
 	return rampManaRegex.MatchString(card.OracleText) || landCardRegex.MatchString(card.OracleText)

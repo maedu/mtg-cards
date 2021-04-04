@@ -14,13 +14,17 @@ func calculateLand(card *db.Card) {
 }
 
 func isLand(card *db.Card) bool {
-	if card.CardType == "Land" {
-		return true
+	for _, cardType := range card.CardTypes {
+		if cardType == db.Land {
+			return true
+		}
 	}
 
 	for _, cardFace := range card.CardFaces {
-		if cardFace.CardType == "Land" {
-			return true
+		for _, cardType := range cardFace.CardTypes {
+			if cardType == db.Land {
+				return true
+			}
 		}
 	}
 

@@ -14,5 +14,11 @@ func calculateCreature(card *db.Card) {
 }
 
 func isCreature(card *db.Card) bool {
-	return card.CardType == db.Creature
+	for _, cardType := range card.CardTypes {
+		if cardType == db.Creature {
+			return true
+		}
+	}
+
+	return false
 }

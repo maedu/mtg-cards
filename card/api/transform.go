@@ -144,15 +144,15 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		//db.Vanguard,
 	}
 
-	var cardType db.CardType
+	cardTypes := []db.CardType{}
 
 	for _, cardTypeToCheck := range cardTypesToCheck {
 		if strings.Contains(scryfallCard.TypeLine, string(cardTypeToCheck)) {
-			cardType = cardTypeToCheck
+			cardTypes = append(cardTypes, cardTypeToCheck)
 			break
 		}
 	}
-	if cardType == "" {
+	if len(cardTypes) == 0 {
 		return nil
 	}
 
@@ -251,7 +251,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		ManaCost:        scryfallCard.ManaCost,
 		Cmc:             scryfallCard.Cmc,
 		TypeLine:        scryfallCard.TypeLine,
-		CardType:        cardType,
+		CardTypes:       cardTypes,
 		OracleText:      scryfallCard.OracleText,
 		Colors:          colors,
 		ColorIdentity:   scryfallCard.ColorIdentity,

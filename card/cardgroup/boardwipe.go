@@ -25,18 +25,26 @@ var boardWipeCards = []string{
 }
 
 func isBoardWipe(card *db.Card) bool {
-	if card.CardType != db.Instant && card.CardType != db.Sorcery {
+	for _, boardWipeCard := range boardWipeCards {
+		if boardWipeCard == card.Name {
+			return true
+		}
+	}
+
+	instantSorceryFound := false
+	for _, cardType := range card.CardTypes {
+		if cardType == db.Instant || cardType == db.Sorcery {
+			instantSorceryFound = true
+			break
+		}
+	}
+
+	if !instantSorceryFound {
 		return false
 	}
 
 	if boardWipeDestroyAllRegex.MatchString(card.OracleText) {
 		return true
-	}
-
-	for _, boardWipeCard := range boardWipeCards {
-		if boardWipeCard == card.Name {
-			return true
-		}
 	}
 
 	return false
