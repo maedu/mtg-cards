@@ -123,6 +123,9 @@ func handleGetCards(c *gin.Context) {
 		}
 	}
 
+	sortBy := c.Query("sortBy")
+	sortDir := c.Query("sortDir")
+
 	request := db.CardSearchRequest{
 		Text:                    text,
 		Cmc:                     cmc,
@@ -132,6 +135,8 @@ func handleGetCards(c *gin.Context) {
 		SearchRelatedToMainCard: searchRelatedToMainCard,
 		PriceMin:                priceMin,
 		PriceMax:                priceMax,
+		SortBy:                  sortBy,
+		SortDir:                 sortDir,
 	}
 	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
 	//loadedCards, err := collection.FindCards(filterByFullText)

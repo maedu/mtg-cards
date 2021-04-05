@@ -145,11 +145,13 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 	}
 
 	cardTypes := []db.CardType{}
-
+	isLand := false
 	for _, cardTypeToCheck := range cardTypesToCheck {
 		if strings.Contains(scryfallCard.TypeLine, string(cardTypeToCheck)) {
 			cardTypes = append(cardTypes, cardTypeToCheck)
-			break
+			if cardTypeToCheck == db.Land {
+				isLand = true
+			}
 		}
 	}
 	if len(cardTypes) == 0 {
@@ -239,7 +241,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		} else if prices[scryfallDB.TIX] > 0.0 {
 			price = prices[scryfallDB.TIX] * (*priceMap)[scryfallDB.TIX]
 		} else {
-			fmt.Printf("No price found for %s: %v, \n\n", scryfallCard.Name, scryfallCard)
+			// fmt.Printf("No price found for %s: %v, \n\n", scryfallCard.Name, scryfallCard)
 		}
 	}
 
@@ -265,6 +267,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		Price:           price,
 		CardFaces:       cardFaces,
 		IsCommander:     isCommander,
+		IsLand:          isLand,
 		SearchText:      searchText,
 		Synergies:       cardSynergies,
 	}

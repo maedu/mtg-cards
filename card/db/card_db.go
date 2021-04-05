@@ -69,6 +69,7 @@ type Card struct {
 	Score           float64            `bson:"score" json:"score"`
 	CardFaces       []Card             `bson:"card_faces" json:"cardFaces"`
 	IsCommander     bool               `bson:"is_commander" json:"isCommander"`
+	IsLand          bool               `bson:"is_land" json:"-"`
 	SearchText      string             `bson:"search_text" json:"searchText"`
 	CardGroups      []string           `bson:"card_groups" json:"cardGroups"`
 	Synergies       map[string]float64 `bson:"synergies" json:"synergies"`
@@ -83,6 +84,8 @@ type CardSearchRequest struct {
 	SearchRelatedToMainCard bool
 	PriceMin                float64
 	PriceMax                float64
+	SortBy                  string
+	SortDir                 string
 }
 
 // CardCollection ...
@@ -162,9 +165,7 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 
 	trimmedText := strings.TrimSpace(request.Text)
 	projection := bson.M{}
-	var sort interface{} = bson.D{
-		{"name", 1},
-	}
+
 	filters := []bson.M{}
 	if trimmedText != "" {
 		filters = append(filters, bson.M{"$text": bson.M{
@@ -176,11 +177,6 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 			},
 		}
 
-		sort = bson.M{
-			"score": bson.M{
-				"$meta": "textScore",
-			},
-		}
 	}
 
 	if request.Cmc != nil && len(request.Cmc) > 0 {
@@ -258,6 +254,7 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 
 	fmt.Printf("Filter: %v", filter)
 
+	sort := getSortOptions(request)
 	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
 	if err != nil {
 		return PaginatedResult{}, err
@@ -317,6 +314,33 @@ func (collection *CardCollection) GetCardByIDs(ids *[]primitive.ObjectID) (*[]Ca
 	}
 	return &cards, nil
 
+}
+
+func getSortOptions(request CardSearchRequest) interface{} {
+	trimmedText := strings.TrimSpace(request.Text)
+	if trimmedText != "" {
+		return bson.M{
+			"score": bson.M{
+				"$meta": "textScore",
+			},
+		}
+	}
+
+	sortDir := 1
+	if request.SortDir == "desc" {
+		sortDir = -1
+	}
+	sortBy := request.SortBy
+	if sortBy == "synergy" {
+		sortBy = "synergies." + request.MainCardForSynergy
+	}
+
+	sort := bson.D{
+		{"is_land", 1},
+		{sortBy, sortDir},
+	}
+
+	return sort
 }
 
 // GetCardByName retrives a card by its key from the db
