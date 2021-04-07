@@ -19,13 +19,15 @@ func handleUpdateCards(c *gin.Context) {
 
 	err := client.UpdateCards()
 	if err != nil {
-		c.Error(err)
+		fmt.Printf("Error updating cards: %w\n", err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	err = TransformCards()
 	if err != nil {
-		c.Error(err)
+		fmt.Printf("Error transforming cards: %w\n", err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -37,6 +39,7 @@ func handleTransformCards(c *gin.Context) {
 
 	err := TransformCards()
 	if err != nil {
+		fmt.Printf("Error transforming cards: %w\n", err)
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -98,11 +101,11 @@ func TransformCards() error {
 		}
 		err = collection.CreateMany(cards)
 		if err != nil {
-			return err
+			return fmt.Errorf("CreateMany failed for page %d: %w", page, err)
 		}
 		page = loadedScryfallCardsPaginated.Pagination.Next
 	}
-
+	fmt.Println("Transformation done")
 	return nil
 }
 
