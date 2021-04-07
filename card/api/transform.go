@@ -51,11 +51,6 @@ func TransformCards() error {
 	scryfallCollection := scryfallDB.GetScryfallCardCollection()
 	defer scryfallCollection.Disconnect()
 
-	loadedScryfallCards, err := scryfallCollection.GetAllScryfallCards()
-	if err != nil {
-		return err
-	}
-
 	edhrecSynergyCollection, err := edhrecDB.GetEdhrecSynergyCollection()
 	defer edhrecSynergyCollection.Disconnect()
 
@@ -71,52 +66,51 @@ func TransformCards() error {
 		synergies[edhSynergy.CardWithSynergy][edhSynergy.MainCard] = edhSynergy.Synergy
 	}
 
-	cards := []*db.Card{}
-	priceMap := getPriceMap(loadedScryfallCards)
-	log.Println("Transform cards")
-	for _, scryfallCard := range loadedScryfallCards {
-		card := transformCard(scryfallCard, &synergies, &priceMap, nil)
-		if card != nil {
-			cards = append(cards, card)
-		}
-	}
-
-	log.Println("Get cards collection")
 	collection, err := db.GetCardCollection()
 	if err != nil {
 		return err
 	}
 	defer collection.Disconnect()
-	_, err = collection.ReplaceAll(cards)
 
-	return err
+	collection.DeleteAll()
+
+	priceMap := getPriceMap()
+
+	var page int64 = 0
+	var limit int64 = 1000
+	first := true
+
+	for first || page > 0 {
+
+		first = false
+		loadedScryfallCardsPaginated, err := scryfallCollection.GetScryfallCardsPaginated(limit, page)
+		fmt.Printf("Loaded cards, page: %v\n", loadedScryfallCardsPaginated.Pagination.Page)
+		if err != nil {
+			return err
+		}
+		cards := []*db.Card{}
+
+		for _, scryfallCard := range loadedScryfallCardsPaginated.Cards {
+			card := transformCard(scryfallCard, &synergies, &priceMap, nil)
+			if card != nil {
+				cards = append(cards, card)
+			}
+		}
+		err = collection.CreateMany(cards)
+		if err != nil {
+			return err
+		}
+		page = loadedScryfallCardsPaginated.Pagination.Next
+	}
+
+	return nil
 }
 
-func getPriceMap(loadedScryfallCards []*scryfallDB.ScryfallCard) map[scryfallDB.Currency]float64 {
-	highestPrices := map[scryfallDB.Currency]float64{}
-	var missing bool
-	for _, scryfallCard := range loadedScryfallCards {
-		prices := map[scryfallDB.Currency]float64{}
-		missing = false
-		for currency, currencyPrice := range scryfallCard.Prices {
-			prices[currency] = parseAmount(currencyPrice)
-			if prices[currency] == 0.0 {
-				missing = true
-				break
-			}
-		}
-		if !missing {
-			if highestPrices == nil || prices[scryfallDB.USD] > highestPrices[scryfallDB.USD] {
-				highestPrices = prices
-			}
-		}
-	}
+func getPriceMap() map[scryfallDB.Currency]float64 {
 	priceMap := map[scryfallDB.Currency]float64{}
 	priceMap[scryfallDB.USD] = 1.0
-	priceMap[scryfallDB.EUR] = highestPrices[scryfallDB.USD] / highestPrices[scryfallDB.EUR]
-	priceMap[scryfallDB.TIX] = highestPrices[scryfallDB.USD] / highestPrices[scryfallDB.TIX]
-	fmt.Printf("pricemAP: %v", priceMap)
-
+	priceMap[scryfallDB.EUR] = 1.1812452253628725
+	priceMap[scryfallDB.TIX] = 21.747538677918424
 	return priceMap
 }
 

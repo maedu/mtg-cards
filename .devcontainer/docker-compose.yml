@@ -1,0 +1,35 @@
+version: "3"
+services:
+  devcontainer:
+    container_name: "mtg-cards-devcontainer"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mounts the project folder to '/workspace'. While this file is in .devcontainer,
+      # mounts are relative to the first file in the list, which is a level up.
+      - nfsmount:/workspace:cached
+      - ~/.ssh/id_rsa:/root/.ssh/id_rsa:cached
+      - ~/.ssh/id_rsa.pub:/root/.ssh/id_rsa.pub:cached
+    # [Optional] Required for ptrace-based debuggers like C++, Go, and Rust
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    environment:
+      - MONGODB_USERNAME=admin
+      - MONGODB_PASSWORD=23YAKLKJzzZYKW22
+      - MONGODB_ENDPOINT=mongo:27017
+      - MONGODB_PROTOCOL=mongodb
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+volumes:
+  nfsmount:
+      driver: local
+      driver_opts:
+          type: nfs
+          o: addr=192.168.64.1,rw,nolock,hard,nointr,nfsvers=3
+          device: ":$PWD"  

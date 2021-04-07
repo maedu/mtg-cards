@@ -287,7 +287,7 @@ func (collection *CardCollection) GetCardByID(id string) (*Card, error) {
 	}
 	result := collection.Collection.FindOne(ctx, bson.D{bson.E{Key: "_id", Value: objID}})
 	if result == nil {
-		return nil, errors.New("Could not find a Card")
+		return nil, errors.New("could not find a Card")
 	}
 	err = result.Decode(&card)
 
@@ -385,7 +385,7 @@ func (collection *CardCollection) GetCardsByNames(names []string) ([]*Card, erro
 
 	cursor, err := collection.Collection.Find(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("Find failed: %w", err)
+		return nil, fmt.Errorf("find failed: %w", err)
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &cards)
@@ -428,8 +428,15 @@ func (collection *CardCollection) Create(card *Card) (primitive.ObjectID, error)
 	return oid, nil
 }
 
+// DeleteAll cards in the collection
+func (collection *CardCollection) DeleteAll() error {
+	ctx := collection.Context
+
+	return collection.Collection.Drop(ctx)
+}
+
 // CreateMany creating many cards in a mongo
-func (collection *CardCollection) CreateMany(cards []*Card) (*[]string, error) {
+func (collection *CardCollection) CreateMany(cards []*Card) error {
 	ctx := collection.Context
 
 	var ui []interface{}
@@ -438,18 +445,13 @@ func (collection *CardCollection) CreateMany(cards []*Card) (*[]string, error) {
 		ui = append(ui, t)
 	}
 
-	result, err := collection.Collection.InsertMany(ctx, ui)
+	_, err := collection.Collection.InsertMany(ctx, ui)
 	if err != nil {
 		log.Printf("Could not create Card: %v", err)
-		return nil, err
+		return err
 	}
 
-	var oids = []string{}
-
-	for _, id := range result.InsertedIDs {
-		oids = append(oids, id.(string))
-	}
-	return &oids, nil
+	return nil
 }
 
 //Update updating an existing card in a mongo
@@ -486,7 +488,7 @@ func (collection *CardCollection) DeleteCardByID(id string) error {
 	}
 	result, err := collection.Collection.DeleteOne(ctx, bson.D{bson.E{Key: "_id", Value: objID}})
 	if result == nil {
-		return errors.New("Could not find a Card")
+		return errors.New("could not find a Card")
 	}
 
 	if err != nil {

@@ -3,8 +3,10 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
+	pagination "github.com/maedu/mongo-go-pagination"
 	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,6 +26,11 @@ const (
 	EUR_FOIL Currency = "eur_foil"
 	TIX      Currency = "tix"
 )
+
+type PaginatedResult struct {
+	Cards      []*ScryfallCard           `json:"cards"`
+	Pagination pagination.PaginationData `json:"pagination"`
+}
 
 type ScryfallCard struct {
 	ID            string                 `bson:"_id" json:"id"`
@@ -105,6 +112,39 @@ func (collection *ScryfallCardCollection) GetAllScryfallCards() ([]*ScryfallCard
 		return nil, err
 	}
 	return scryfallcards, nil
+}
+
+// GetCScryfallCards Retrives all cards from the db
+func (collection *ScryfallCardCollection) GetScryfallCardsPaginated(limit int64, page int64) (PaginatedResult, error) {
+
+	projection := bson.M{}
+
+	filter := bson.M{}
+
+	fmt.Printf("Filter: %v", filter)
+
+	sort := bson.D{
+		{"$id", 1},
+	}
+	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
+	if err != nil {
+		return PaginatedResult{}, err
+	}
+
+	var cards []*ScryfallCard = []*ScryfallCard{}
+	for _, raw := range paginatedData.Data {
+		var card *ScryfallCard
+		if marshallErr := bson.Unmarshal(raw, &card); marshallErr != nil {
+			log.Printf("Failed marshalling: %v", err)
+			return PaginatedResult{}, err
+		}
+		cards = append(cards, card)
+
+	}
+	return PaginatedResult{
+		Cards:      cards,
+		Pagination: paginatedData.Pagination,
+	}, nil
 }
 
 // GetScryfallCardByID Retrives a scryfallcard by its id from the db
