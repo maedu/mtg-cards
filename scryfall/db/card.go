@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	pagination "github.com/maedu/mongo-go-pagination"
@@ -121,11 +120,7 @@ func (collection *ScryfallCardCollection) GetScryfallCardsPaginated(limit int64,
 
 	filter := bson.M{}
 
-	fmt.Printf("Filter: %v", filter)
-
-	sort := bson.D{
-		{"$id", 1},
-	}
+	sort := bson.D{}
 	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
 	if err != nil {
 		return PaginatedResult{}, err

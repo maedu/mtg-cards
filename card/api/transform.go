@@ -87,10 +87,10 @@ func TransformCards() error {
 
 		first = false
 		loadedScryfallCardsPaginated, err := scryfallCollection.GetScryfallCardsPaginated(limit, page)
-		fmt.Printf("Loaded cards, page: %v\n", loadedScryfallCardsPaginated.Pagination.Page)
 		if err != nil {
-			return err
+			return fmt.Errorf("GetScryfallCardsPaginated failed, for page %d: %w", page, err)
 		}
+		fmt.Printf("Loaded cards, page: %v\n", loadedScryfallCardsPaginated.Pagination.Page)
 		cards := []*db.Card{}
 
 		for _, scryfallCard := range loadedScryfallCardsPaginated.Cards {
