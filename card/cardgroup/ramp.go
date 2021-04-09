@@ -32,6 +32,7 @@ var nonRampCards = []string{
 	"Imprisoned in the Moon",
 	"Abundant Growth",
 	"Urban Utopia",
+	"Assassin's Trophy",
 }
 
 func hasRampText(card *db.Card) bool {
