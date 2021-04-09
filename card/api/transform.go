@@ -39,7 +39,7 @@ func handleTransformCards(c *gin.Context) {
 
 	err := TransformCards()
 	if err != nil {
-		fmt.Printf("Error transforming cards: %v\n", err)
+		fmt.Printf("Error transforming cards: %v2\n", err)
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
