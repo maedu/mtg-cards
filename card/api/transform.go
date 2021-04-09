@@ -166,6 +166,9 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 			}
 		}
 	}
+	if !legalInCommander && parentCard == nil {
+		return nil
+	}
 
 	imageURLs := map[string]string{}
 
