@@ -19,7 +19,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Sol Ring",
 			args: args{
 				card: &db.Card{
-					CardType:   "Artifact",
+					CardTypes:  []db.CardType{"Artifact"},
 					OracleText: "{T}: Add {C}{C}.",
 				},
 			},
@@ -29,7 +29,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Wirewood Elf",
 			args: args{
 				card: &db.Card{
-					CardType:   "Creature",
+					CardTypes:  []db.CardType{"Creature"},
 					OracleText: "{T}: Add {G}.",
 				},
 			},
@@ -39,7 +39,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Jaspera Sentinel",
 			args: args{
 				card: &db.Card{
-					CardType:   "Creature",
+					CardTypes:  []db.CardType{"Creature"},
 					OracleText: "{T}, Tap an untapped creature you control: Add one mana of any color.",
 				},
 			},
@@ -49,7 +49,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Mana Bloom",
 			args: args{
 				card: &db.Card{
-					CardType:   "Enchantment",
+					CardTypes:  []db.CardType{"Enchantment"},
 					OracleText: "Remove a charge counter from Mana Bloom: Add one mana of any color.",
 				},
 			},
@@ -59,7 +59,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Mana Flare",
 			args: args{
 				card: &db.Card{
-					CardType:   "Enchantment",
+					CardTypes:  []db.CardType{"Enchantment"},
 					OracleText: "Whenever a player taps a land for mana, that player adds one mana of any type that land produced.",
 				},
 			},
@@ -69,7 +69,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Mana Prism",
 			args: args{
 				card: &db.Card{
-					CardType:   "Artifact",
+					CardTypes:  []db.CardType{"Artifact"},
 					OracleText: "{T}: Add {C}.↵{1}, {T}: Add one mana of any color.",
 				},
 			},
@@ -79,7 +79,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Raider's Karve",
 			args: args{
 				card: &db.Card{
-					CardType:   "Artifact",
+					CardTypes:  []db.CardType{"Artifact"},
 					OracleText: "Whenever Raiders’ Karve attacks, look at the top card of your library. If it’s a land card, you may put it onto the battlefield tapped.",
 				},
 			},
@@ -89,7 +89,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Binding the Old Gods",
 			args: args{
 				card: &db.Card{
-					CardType:   "Enchantment",
+					CardTypes:  []db.CardType{"Enchantment"},
 					OracleText: "II Search your library for a Forest card, put it onto the battlefield tapped, then shuffle your library.",
 				},
 			},
@@ -99,7 +99,7 @@ func Test_hasRampText(t *testing.T) {
 			name: "Barbarian Ring",
 			args: args{
 				card: &db.Card{
-					CardType:   "Land",
+					CardTypes:  []db.CardType{"Land"},
 					OracleText: "{T}: Add {R}. Barbarian Ring deals 1 damage to you.",
 				},
 			},
