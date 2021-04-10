@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/db"
@@ -169,6 +170,17 @@ func setUserQuantityOnCards(c *gin.Context, cards []*db.Card) error {
 
 		for _, card := range cards {
 			card.UserQuantity = userCardMap[card.Name]
+
+			if card.UserQuantity == 0 {
+				index := strings.Index(card.Name, " // ")
+				if index > -1 {
+					// Special Use-Case: Two-sided collected cards only contain first side, but card contains both in name
+					nameOfFirstSide := card.Name[:index]
+					card.UserQuantity = userCardMap[nameOfFirstSide]
+
+				}
+
+			}
 		}
 	}
 	return nil
