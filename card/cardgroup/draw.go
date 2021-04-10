@@ -20,6 +20,8 @@ var drawRegex, _ = regexp.Compile("(?i)Draw( [a-zA-Z]+| that many)? card")
 var nonCardDraw = []string{
 	"Hullbreacher",
 	"Veil of Summer",
+	"The Locust God",
+	"Chasm Skulker",
 }
 
 func isDraw(card *db.Card) bool {
