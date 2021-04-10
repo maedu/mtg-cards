@@ -1,6 +1,7 @@
 package server
 
 import (
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -8,13 +9,13 @@ import (
 
 func Configure() *gin.Engine {
 	r := gin.Default()
-	r.Use(cors.Default())
-	/*r.Use(cors.New(cors.Config{
+	r.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
 			return true //return strings.Contains(origin, "localhost")
 		},
-		MaxAge: 12 * time.Hour,
-	}))*/
+		AllowHeaders: []string{"Authorization", "Content-Type"},
+		MaxAge:       12 * time.Hour,
+	}))
 
 	return r
 }

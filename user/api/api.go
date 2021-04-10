@@ -7,12 +7,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	userCardDB "github.com/maedu/mtg-cards/user/db"
-	"google.golang.org/api/oauth2/v1"
+	oauth2 "google.golang.org/api/oauth2/v1"
 )
+
+var httpClient = &http.Client{}
 
 // Setup Setup REST API
 func Setup(r *gin.Engine) {
+	r.GET("/api/user", handleGetUser)
 	r.GET("/api/user/cards", handleGetCards)
+}
+
+func handleGetUser(c *gin.Context) {
+	if userID, ok := getUserIDFromAccessToken(c); ok {
+		c.JSON(http.StatusOK, userID)
+	}
 }
 
 func handleGetCards(c *gin.Context) {

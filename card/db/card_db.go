@@ -185,7 +185,7 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 			comparison := "$eq"
 			if cmc <= 1 {
 				comparison = "$lte"
-			} else if cmc >= 6 {
+			} else if cmc >= 7 {
 				comparison = "$gte"
 			}
 			cmcFilter = append(cmcFilter, bson.M{
