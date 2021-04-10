@@ -104,7 +104,7 @@ func (collection *UserCardCollection) ReplaceAllOfUserAndSource(userID string, s
 		return err
 	}
 	if result == nil {
-		return errors.New("Could not delete a UserCards")
+		return errors.New("could not delete a UserCards")
 	}
 
 	var ui []interface{}

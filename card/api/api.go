@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maedu/mtg-cards/card/db"
+	"github.com/maedu/mtg-cards/user/auth"
+	userDB "github.com/maedu/mtg-cards/user/db"
 )
 
 type FindCardsRequest struct {
@@ -144,6 +146,30 @@ func handleGetCards(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+
+	if userID, ok := auth.GetUserIDFromAccessToken(c, false); ok {
+		userCardCollection, err := userDB.GetUserCardCollection()
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		defer userCardCollection.Disconnect()
+
+		userCards, err := userCardCollection.GetUserCardsByUserID(userID)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		userCardMap := map[string]int64{}
+		for _, card := range userCards {
+			userCardMap[card.Card] = card.Quantity
+		}
+
+		for _, card := range loadedCards.Cards {
+			card.UserQuantity = userCardMap[card.Name]
+		}
+	}
+
 	c.JSON(http.StatusOK, loadedCards)
 }
 

@@ -15,13 +15,13 @@ func Setup(r *gin.Engine) {
 }
 
 func handleGetUser(c *gin.Context) {
-	if userID, ok := auth.GetUserIDFromAccessToken(c); ok {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
 		c.JSON(http.StatusOK, userID)
 	}
 }
 
 func handleGetCards(c *gin.Context) {
-	if userID, ok := auth.GetUserIDFromAccessToken(c); ok {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
 		collection, err := userCardDB.GetUserCardCollection()
 		defer collection.Disconnect()
 		if err != nil {

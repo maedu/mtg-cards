@@ -11,20 +11,24 @@ import (
 
 var httpClient = &http.Client{}
 
-func GetUserIDFromAccessToken(c *gin.Context) (string, bool) {
+func GetUserIDFromAccessToken(c *gin.Context, sendErrorStatus bool) (string, bool) {
 
 	if token, ok := getAccessToken(c); ok {
 		info, err := verifyAccessToken(token)
 		if err != nil {
 
-			c.JSON(http.StatusForbidden, "Token verification failed")
+			if sendErrorStatus {
+				c.JSON(http.StatusForbidden, "Token verification failed")
+			}
 			return "", false
 		}
 
 		return info.Email, true
 
 	}
-	c.JSON(http.StatusUnauthorized, "Missing authorization token")
+	if sendErrorStatus {
+		c.JSON(http.StatusUnauthorized, "Missing authorization token")
+	}
 	return "", false
 }
 

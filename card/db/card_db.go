@@ -73,6 +73,7 @@ type Card struct {
 	SearchText      string             `bson:"search_text" json:"searchText"`
 	CardGroups      []string           `bson:"card_groups" json:"cardGroups"`
 	Synergies       map[string]float64 `bson:"synergies" json:"synergies"`
+	UserQuantity    int64              `bson:"-" json:"userQuantity"`
 }
 
 type CardSearchRequest struct {

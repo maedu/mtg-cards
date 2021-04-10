@@ -24,7 +24,7 @@ func handleUploadCards(c *gin.Context) {
 		return
 	}
 
-	if userID, ok := auth.GetUserIDFromAccessToken(c); ok {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
 		uploadCards(c, userID, source)
 	}
 }
