@@ -11,35 +11,36 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type EdhrecSynergy struct {
-	ID              string  `bson:"_id" json:"id"`
-	MainCard        string  `bson:"main_card" json:"mainCard"`
-	CardWithSynergy string  `bson:"card_with_synergy" json:"cardWithSynergy"`
-	Synergy         float64 `bson:"synergy" json:"synergy"`
+type UserCard struct {
+	ID      string `bson:"_id" json:"id"`
+	UserID  string `bson:"userID" json:"-"`
+	Card    string `bson:"card" json:"card"`
+	SetName string `bson:"set_name" json:"setName"`
+	Source  string `bson:"source" json:"source"`
 }
 
-// EdhrecSynergyCollection ...
-type EdhrecSynergyCollection struct {
+// UserCardCollection ...
+type UserCardCollection struct {
 	*mongo.Client
 	*mongo.Collection
 	context.Context
 	context.CancelFunc
 }
 
-// GetEdhrecSynergyCollection ...
-func GetEdhrecSynergyCollection() (EdhrecSynergyCollection, error) {
+// GetUserCardCollection ...
+func GetUserCardCollection() (UserCardCollection, error) {
 	client, ctx, cancel := db.GetConnection()
 	db := client.Database(db.GetDatabaseName())
-	collection := db.Collection("edhrec_synergies")
+	collection := db.Collection("user_card")
 
 	model := mongo.IndexModel{
 		Keys: bson.M{
-			"main_card": 1,
+			"user_id": 1,
 		}, Options: nil,
 	}
 	_, err := collection.Indexes().CreateOne(ctx, model)
 
-	return EdhrecSynergyCollection{
+	return UserCardCollection{
 		Client:     client,
 		Collection: collection,
 		Context:    ctx,
@@ -48,14 +49,14 @@ func GetEdhrecSynergyCollection() (EdhrecSynergyCollection, error) {
 }
 
 // Disconnect ...
-func (collection *EdhrecSynergyCollection) Disconnect() {
+func (collection *UserCardCollection) Disconnect() {
 	collection.CancelFunc()
 	collection.Client.Disconnect(collection.Context)
 }
 
-// GetAllEdhrecSynergys Retrives all edhrecsynergys from the db
-func (collection *EdhrecSynergyCollection) GetAllEdhrecSynergys() ([]*EdhrecSynergy, error) {
-	var edhrecsynergys []*EdhrecSynergy = []*EdhrecSynergy{}
+// GetAllUserCards Retrives all usercards from the db
+func (collection *UserCardCollection) GetAllUserCards() ([]*UserCard, error) {
+	var usercards []*UserCard = []*UserCard{}
 	ctx := collection.Context
 
 	cursor, err := collection.Collection.Find(ctx, bson.D{})
@@ -63,34 +64,34 @@ func (collection *EdhrecSynergyCollection) GetAllEdhrecSynergys() ([]*EdhrecSyne
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &edhrecsynergys)
+	err = cursor.All(ctx, &usercards)
 	if err != nil {
 		log.Printf("Failed marshalling %v", err)
 		return nil, err
 	}
-	return edhrecsynergys, nil
+	return usercards, nil
 }
 
-// GetEdhrecSynergysByMainCard retrieves edhrecsynergys by their main card from the db
-func (collection *EdhrecSynergyCollection) GetEdhrecSynergysByMainCard(mainCard string) ([]EdhrecSynergy, error) {
+// GetUserCardsByUserID retrieves usercards for the user from the db
+func (collection *UserCardCollection) GetUserCardsByUserID(userID string) ([]UserCard, error) {
 	ctx := collection.Context
-	var edhrecsynergys []EdhrecSynergy = []EdhrecSynergy{}
-	cursor, err := collection.Collection.Find(ctx, bson.D{bson.E{Key: "main_card", Value: mainCard}})
+	var usercards []UserCard = []UserCard{}
+	cursor, err := collection.Collection.Find(ctx, bson.D{bson.E{Key: "user_id", Value: userID}})
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &edhrecsynergys)
+	err = cursor.All(ctx, &usercards)
 	if err != nil {
 		log.Printf("Failed marshalling %v", err)
 		return nil, err
 	}
-	return edhrecsynergys, nil
+	return usercards, nil
 
 }
 
 // ReplaceAllOfMainCard first delete all for main card and then create many cards in a mongo db
-func (collection *EdhrecSynergyCollection) ReplaceAllOfMainCard(mainCard string, edhrecSynergys []EdhrecSynergy) error {
+func (collection *UserCardCollection) ReplaceAllOfMainCard(mainCard string, userCards []UserCard) error {
 	ctx := collection.Context
 
 	filter := bson.M{"main_card": bson.M{"$eq": mainCard}}
@@ -99,11 +100,11 @@ func (collection *EdhrecSynergyCollection) ReplaceAllOfMainCard(mainCard string,
 		return err
 	}
 	if result == nil {
-		return errors.New("Could not delete a EdhrecSynergys")
+		return errors.New("Could not delete a UserCards")
 	}
 
 	var ui []interface{}
-	for _, t := range edhrecSynergys {
+	for _, t := range userCards {
 		if t.ID == "" {
 			t.ID = primitive.NewObjectID().Hex()
 		}
