@@ -50,7 +50,6 @@ func uploadCards(c *gin.Context, user string, source string) {
 	collection.ReplaceAllOfUserAndSource(user, source, cards)
 
 	c.JSON(http.StatusOK, cards)
-	return
 }
 
 func readFile(c *gin.Context) (*multipart.File, error) {

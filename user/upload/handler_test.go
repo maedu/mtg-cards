@@ -53,6 +53,9 @@ func testHandleImport(t *testing.T, content string) {
 
 	// Now that you have a form, you can submit it to your handler.
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/parse-test", ts.URL), &b)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	// Submit the request
