@@ -15,7 +15,6 @@ type UserCard struct {
 	ID       string `bson:"_id" json:"-"`
 	UserID   string `bson:"user_id" json:"-"`
 	Card     string `bson:"card" json:"card"`
-	SetName  string `bson:"set_name" json:"setName"`
 	Quantity int64  `bson:"quantity" json:"quantity"`
 	Source   string `bson:"source" json:"source"`
 }
