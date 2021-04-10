@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -384,50 +383,6 @@ func (collection *CardCollection) CreateMany(cards []*Card) error {
 		return err
 	}
 
-	return nil
-}
-
-//Update updating an existing card in a mongo
-func (collection *CardCollection) Update(card *Card) (*Card, error) {
-	ctx := collection.Context
-	var updatedCard *Card
-
-	update := bson.M{
-		"$set": card,
-	}
-
-	upsert := true
-	after := options.After
-	opt := options.FindOneAndUpdateOptions{
-		Upsert:         &upsert,
-		ReturnDocument: &after,
-	}
-
-	err := collection.Collection.FindOneAndUpdate(ctx, bson.M{"_id": card.ID}, update, &opt).Decode(&updatedCard)
-	if err != nil {
-		log.Printf("Could not save Card: %v", err)
-		return nil, err
-	}
-	return updatedCard, nil
-}
-
-// DeleteCardByID Deletes an card by its id from the db
-func (collection *CardCollection) DeleteCardByID(id string) error {
-	ctx := collection.Context
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Printf("Failed parsing id %v", err)
-		return err
-	}
-	result, err := collection.Collection.DeleteOne(ctx, bson.D{bson.E{Key: "_id", Value: objID}})
-	if result == nil {
-		return errors.New("could not find a Card")
-	}
-
-	if err != nil {
-		log.Printf("Failed deleting %v", err)
-		return err
-	}
 	return nil
 }
 
