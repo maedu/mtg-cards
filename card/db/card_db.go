@@ -336,8 +336,8 @@ func getSortOptions(request CardSearchRequest) interface{} {
 	}
 
 	sort := bson.D{
-		{"is_land", 1},
-		{sortBy, sortDir},
+		primitive.E{Key: "is_land", Value: 1},
+		primitive.E{Key: sortBy, Value: sortDir},
 	}
 
 	return sort
