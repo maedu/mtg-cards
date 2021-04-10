@@ -141,36 +141,37 @@ func handleGetCards(c *gin.Context) {
 		SortDir:                 sortDir,
 	}
 	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
-	//loadedCards, err := collection.FindCards(filterByFullText)
 	if err != nil {
 		c.Error(err)
 		return
 	}
+	setUserQuantityOnCards(c, loadedCards.Cards)
 
+	c.JSON(http.StatusOK, loadedCards)
+}
+
+func setUserQuantityOnCards(c *gin.Context, cards []*db.Card) error {
 	if userID, ok := auth.GetUserIDFromAccessToken(c, false); ok {
 		userCardCollection, err := userDB.GetUserCardCollection()
 		if err != nil {
-			c.Error(err)
-			return
+			return fmt.Errorf("getting userCardCollection failed: %w", err)
 		}
 		defer userCardCollection.Disconnect()
 
 		userCards, err := userCardCollection.GetUserCardsByUserID(userID)
 		if err != nil {
-			c.Error(err)
-			return
+			return fmt.Errorf("getting cards by userID failed: %w", err)
 		}
 		userCardMap := map[string]int64{}
 		for _, card := range userCards {
 			userCardMap[card.Card] = card.Quantity
 		}
 
-		for _, card := range loadedCards.Cards {
+		for _, card := range cards {
 			card.UserQuantity = userCardMap[card.Name]
 		}
 	}
-
-	c.JSON(http.StatusOK, loadedCards)
+	return nil
 }
 
 func handleFindCards(c *gin.Context) {
@@ -203,6 +204,7 @@ func handleFindCards(c *gin.Context) {
 		return
 	}
 
+	setUserQuantityOnCards(c, foundCards)
 	for _, card := range foundCards {
 		cards[card.Name] = card
 	}
@@ -214,6 +216,7 @@ func handleFindCards(c *gin.Context) {
 			c.Error(err)
 			return
 		}
+		setUserQuantityOnCards(c, cards)
 		sets[name] = cards
 	}
 
