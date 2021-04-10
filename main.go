@@ -10,6 +10,7 @@ import (
 	"github.com/maedu/mtg-cards/server"
 	setApi "github.com/maedu/mtg-cards/set/api"
 	userApi "github.com/maedu/mtg-cards/user/api"
+	userUpload "github.com/maedu/mtg-cards/user/upload"
 )
 
 func main() {
@@ -19,5 +20,6 @@ func main() {
 	sealed.Setup(server)
 	edhrecApi.Setup(server)
 	userApi.Setup(server)
+	userUpload.Setup(server)
 	server.Run(fmt.Sprintf("0.0.0.0:%s", env.GetEnv("SERVER_PORT", "4004"))) // listen and serve on 0.0.0.0:8080
 }

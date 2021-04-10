@@ -12,11 +12,12 @@ import (
 )
 
 type UserCard struct {
-	ID      string `bson:"_id" json:"id"`
-	UserID  string `bson:"userID" json:"-"`
-	Card    string `bson:"card" json:"card"`
-	SetName string `bson:"set_name" json:"setName"`
-	Source  string `bson:"source" json:"source"`
+	ID       string `bson:"_id" json:"id"`
+	UserID   string `bson:"userID" json:"-"`
+	Card     string `bson:"card" json:"card"`
+	SetName  string `bson:"set_name" json:"setName"`
+	Quantity int64  `bson:"quantity" json:"quantity"`
+	Source   string `bson:"source" json:"source"`
 }
 
 // UserCardCollection ...
@@ -90,11 +91,14 @@ func (collection *UserCardCollection) GetUserCardsByUserID(userID string) ([]Use
 
 }
 
-// ReplaceAllOfMainCard first delete all for main card and then create many cards in a mongo db
-func (collection *UserCardCollection) ReplaceAllOfMainCard(mainCard string, userCards []UserCard) error {
+// ReplaceAllOfUserAndSource first delete all for userId & source and then create many cards in a mongo db
+func (collection *UserCardCollection) ReplaceAllOfUserAndSource(userID string, source string, userCards []*UserCard) error {
 	ctx := collection.Context
 
-	filter := bson.M{"main_card": bson.M{"$eq": mainCard}}
+	filter := bson.M{"$and": []bson.M{
+		{"user_id": bson.M{"$eq": userID}},
+		{"source": bson.M{"$eq": source}},
+	}}
 	result, err := collection.Collection.DeleteMany(ctx, filter)
 	if err != nil {
 		return err
