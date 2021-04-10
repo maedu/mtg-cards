@@ -276,47 +276,6 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 	}, nil
 }
 
-// GetCardByID Retrives a card by its id from the db
-func (collection *CardCollection) GetCardByID(id string) (*Card, error) {
-	var card *Card
-	ctx := collection.Context
-
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Printf("Failed parsing id %v", err)
-		return nil, err
-	}
-	result := collection.Collection.FindOne(ctx, bson.D{bson.E{Key: "_id", Value: objID}})
-	if result == nil {
-		return nil, errors.New("could not find a Card")
-	}
-	err = result.Decode(&card)
-
-	if err != nil {
-		log.Printf("Failed marshalling %v", err)
-		return nil, err
-	}
-	return card, nil
-}
-
-// GetCardByIDs Retrives cards by their ids from the db
-func (collection *CardCollection) GetCardByIDs(ids *[]primitive.ObjectID) (*[]Card, error) {
-	ctx := collection.Context
-	var cards []Card = []Card{}
-	cursor, err := collection.Collection.Find(ctx, bson.D{bson.E{Key: "_id", Value: bson.M{"$in": ids}}})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &cards)
-	if err != nil {
-		log.Printf("Failed marshalling %v", err)
-		return nil, err
-	}
-	return &cards, nil
-
-}
-
 func getSortOptions(request CardSearchRequest) interface{} {
 	trimmedText := strings.TrimSpace(request.Text)
 	if trimmedText != "" {
@@ -342,33 +301,6 @@ func getSortOptions(request CardSearchRequest) interface{} {
 	}
 
 	return sort
-}
-
-// GetCardByName retrives a card by its key from the db
-func (collection *CardCollection) GetCardByName(name string) (*Card, error) {
-	var card *Card
-	ctx := collection.Context
-
-	filter := bson.M{"$or": bson.A{
-		bson.M{"name": name},
-		bson.M{"card_faces.name": name},
-	}}
-
-	result := collection.Collection.FindOne(ctx, filter)
-	if result == nil {
-		return nil, nil
-	}
-	err := result.Decode(&card)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-
-	if err != nil {
-		log.Printf("Failed marshalling %v", err)
-		return nil, err
-	}
-	return card, nil
 }
 
 // GetCardsByNames retrieves cards by their names from the db
