@@ -327,7 +327,7 @@ func (collection *CardCollection) GetCollectedCardsPaginated(limit int64, page i
 		for _, cardGroup := range request.CardGroups {
 			if cardGroup == "Synergy" {
 				synergyFound = true
-			} else {
+			} else if cardGroup != "Collected" {
 				cardGroups = append(cardGroups, cardGroup)
 			}
 		}
@@ -373,93 +373,32 @@ func (collection *CardCollection) GetCollectedCardsPaginated(limit int64, page i
 
 	fmt.Printf("Filter: %v\n", filter)
 
-	matchStage := bson.D{{"$match", filter}}
+	matchStage := bson.M{"$match": filter}
 
-	lookupUserCards := bson.D{{"$lookup", bson.D{
+	lookupUserCards := bson.M{"$lookup": bson.D{
 		{"from", "user_cards"},
 		{"localField", "name"},
 		{"foreignField", "card"},
 		{"as", "user_cards"},
 	},
-	}}
+	}
 	fmt.Println(lookupUserCards)
+
+	matchForUserStage := bson.M{"$match": bson.M{"user_cards.user_id": bson.M{"$eq": request.UserID}}}
 
 	//skipStage := bson.D{{"$skip", (page - 1) * limit}}
 	//limitStage := bson.D{{"$limit", limit}}
+	//sortStage := bson.D{{"$sort", getSortOptions(request)}}
 
 	//groupStage := bson.D{{"$group", bson.D{{"_id", "$podcast"}, {"total", bson.D{{"$sum", "$duration"}}}}}}
 
-	showInfoCursor, err := collection.Aggregate(collection.Context, mongo.Pipeline{
-		matchStage,
-		//lookupUserCards,
-		//	skipStage,
-		//	limitStage,
-	})
-	if err != nil {
-		panic(err)
-	}
-	var showsWithInfo []bson.M
-	if err = showInfoCursor.All(collection.Context, &showsWithInfo); err != nil {
-		panic(err)
-	}
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println(showsWithInfo)
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	return PaginatedResult{}, nil
-
-	/*
-		db.users.aggregate([
-
-		    // Join with user_info table
-		    {
-		        $lookup:{
-		            from: "userinfo",       // other table name
-		            localField: "userId",   // name of users table field
-		            foreignField: "userId", // name of userinfo table field
-		            as: "user_info"         // alias for userinfo table
-		        }
-		    },
-		    {   $unwind:"$user_info" },     // $unwind used for getting data in object or for one record only
-
-		    // Join with user_role table
-		    {
-		        $lookup:{
-		            from: "userrole",
-		            localField: "userId",
-		            foreignField: "userId",
-		            as: "user_role"
-		        }
-		    },
-		    {   $unwind:"$user_role" },
-
-		    // define some conditions here
-		    {
-		        $match:{
-		            $and:[{"userName" : "admin"}]
-		        }
-		    },
-
-		    // define which fields are you want to fetch
-		    {
-		        $project:{
-		            _id : 1,
-		            email : 1,
-		            userName : 1,
-		            userPhone : "$user_info.phone",
-		            role : "$user_role.role",
-		        }
-		    }
-		]);
-
-	*/
-
 	sort := getSortOptions(request)
-	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
+
+	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Select(projection).Sort(sort).Aggregate(
+		matchStage,
+		lookupUserCards,
+		matchForUserStage,
+	)
 	if err != nil {
 		return PaginatedResult{}, err
 	}
@@ -479,14 +418,13 @@ func (collection *CardCollection) GetCollectedCardsPaginated(limit int64, page i
 	}, nil
 }
 
-func getSortOptions(request CardSearchRequest) interface{} {
+func getSortOptions(request CardSearchRequest) bson.D {
 	trimmedText := strings.TrimSpace(request.Text)
 	if trimmedText != "" {
-		return bson.M{
-			"score": bson.M{
+		return bson.D{
+			primitive.E{Key: "score", Value: bson.M{
 				"$meta": "textScore",
-			},
-		}
+			}}}
 	}
 
 	sortDir := 1

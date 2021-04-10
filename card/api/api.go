@@ -196,9 +196,10 @@ func setUserQuantityOnCards(c *gin.Context, cards []*db.Card) error {
 					// Special Use-Case: Two-sided collected cards only contain first side, but card contains both in name
 					nameOfFirstSide := card.Name[:index]
 					card.UserQuantity = userCardMap[nameOfFirstSide]
-
 				}
-
+			}
+			if card.UserQuantity > 0 {
+				card.CardGroups = append(card.CardGroups, "Collected")
 			}
 		}
 	}
