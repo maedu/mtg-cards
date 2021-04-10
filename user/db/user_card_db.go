@@ -12,8 +12,8 @@ import (
 )
 
 type UserCard struct {
-	ID       string `bson:"_id" json:"id"`
-	UserID   string `bson:"userID" json:"-"`
+	ID       string `bson:"_id" json:"-"`
+	UserID   string `bson:"user_id" json:"-"`
 	Card     string `bson:"card" json:"card"`
 	SetName  string `bson:"set_name" json:"setName"`
 	Quantity int64  `bson:"quantity" json:"quantity"`
@@ -32,7 +32,7 @@ type UserCardCollection struct {
 func GetUserCardCollection() (UserCardCollection, error) {
 	client, ctx, cancel := db.GetConnection()
 	db := client.Database(db.GetDatabaseName())
-	collection := db.Collection("user_card")
+	collection := db.Collection("user_cards")
 
 	model := mongo.IndexModel{
 		Keys: bson.M{

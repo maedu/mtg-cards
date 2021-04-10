@@ -47,7 +47,11 @@ func uploadCards(c *gin.Context, user string, source string) {
 		return
 	}
 
-	collection.ReplaceAllOfUserAndSource(user, source, cards)
+	err = collection.ReplaceAllOfUserAndSource(user, source, cards)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
 
 	c.JSON(http.StatusOK, cards)
 }
