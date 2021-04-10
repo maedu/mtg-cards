@@ -129,6 +129,16 @@ func handleGetCards(c *gin.Context) {
 	sortBy := c.Query("sortBy")
 	sortDir := c.Query("sortDir")
 
+	useSearchWithUserCards := false
+	for _, cardGroup := range cardGroups {
+		if cardGroup == "Collected" {
+			useSearchWithUserCards = true
+			break
+		}
+	}
+
+	userID, _ := auth.GetUserIDFromAccessToken(c, false)
+
 	request := db.CardSearchRequest{
 		Text:                    text,
 		Cmc:                     cmc,
@@ -140,8 +150,17 @@ func handleGetCards(c *gin.Context) {
 		PriceMax:                priceMax,
 		SortBy:                  sortBy,
 		SortDir:                 sortDir,
+		UserID:                  userID,
 	}
-	loadedCards, err := collection.GetCardsPaginated(perPage, page, request)
+
+	var loadedCards db.PaginatedResult
+	if useSearchWithUserCards {
+		loadedCards, err = collection.GetCollectedCardsPaginated(perPage, page, request)
+
+	} else {
+		loadedCards, err = collection.GetCardsPaginated(perPage, page, request)
+	}
+
 	if err != nil {
 		c.Error(err)
 		return

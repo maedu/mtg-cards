@@ -86,6 +86,7 @@ type CardSearchRequest struct {
 	PriceMax                float64
 	SortBy                  string
 	SortDir                 string
+	UserID                  string
 }
 
 // CardCollection ...
@@ -253,6 +254,209 @@ func (collection *CardCollection) GetCardsPaginated(limit int64, page int64, req
 	}
 
 	fmt.Printf("Filter: %v", filter)
+
+	sort := getSortOptions(request)
+	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
+	if err != nil {
+		return PaginatedResult{}, err
+	}
+
+	for _, raw := range paginatedData.Data {
+		var card *Card
+		if marshallErr := bson.Unmarshal(raw, &card); marshallErr != nil {
+			log.Printf("Failed marshalling: %v", err)
+			return PaginatedResult{}, err
+		}
+		cards = append(cards, card)
+
+	}
+	return PaginatedResult{
+		Cards:      cards,
+		Pagination: paginatedData.Pagination,
+	}, nil
+}
+
+// GetCollectedCardsPaginated Retrives all cards from the db
+func (collection *CardCollection) GetCollectedCardsPaginated(limit int64, page int64, request CardSearchRequest) (PaginatedResult, error) {
+	var cards []*Card = []*Card{}
+
+	fmt.Println("GetCollectedCardsPaginated")
+
+	trimmedText := strings.TrimSpace(request.Text)
+	projection := bson.M{}
+
+	filters := []bson.M{}
+	if trimmedText != "" {
+		filters = append(filters, bson.M{"$text": bson.M{
+			"$search": trimmedText,
+		}})
+		projection = bson.M{
+			"score": bson.M{
+				"$meta": "textScore",
+			},
+		}
+
+	}
+
+	if request.Cmc != nil && len(request.Cmc) > 0 {
+		cmcFilter := []bson.M{}
+		for _, cmc := range request.Cmc {
+			comparison := "$eq"
+			if cmc <= 1 {
+				comparison = "$lte"
+			} else if cmc >= 7 {
+				comparison = "$gte"
+			}
+			cmcFilter = append(cmcFilter, bson.M{
+				"cmc": bson.M{comparison: cmc},
+			})
+		}
+
+		filters = append(filters, bson.M{"$or": cmcFilter})
+	}
+
+	if request.Colors != nil && len(request.Colors) > 0 {
+		filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{"$elemMatch": bson.M{
+			"$nin": request.Colors,
+		}}}})
+	}
+
+	if request.CardGroups != nil && len(request.CardGroups) > 0 {
+		cardGroups := []string{}
+		synergyFound := false
+		for _, cardGroup := range request.CardGroups {
+			if cardGroup == "Synergy" {
+				synergyFound = true
+			} else {
+				cardGroups = append(cardGroups, cardGroup)
+			}
+		}
+
+		if len(cardGroups) > 0 {
+			filters = append(filters, bson.M{"card_groups": bson.M{
+				"$all": cardGroups,
+			}})
+		}
+
+		if synergyFound {
+			// Filter for synergy
+			filters = append(filters, bson.M{"synergies." + request.MainCardForSynergy: bson.M{
+				"$gte": 0.2,
+			}})
+		}
+	}
+
+	if request.SearchRelatedToMainCard {
+		filters = append(filters, bson.M{"synergies." + request.MainCardForSynergy: bson.M{
+			"$exists": true,
+		}})
+	}
+
+	if request.PriceMin > PriceFilterSkipped {
+		filters = append(filters, bson.M{"price": bson.M{
+			"$gte": request.PriceMin,
+		}})
+	}
+
+	if request.PriceMax > PriceFilterSkipped {
+		filters = append(filters, bson.M{"price": bson.M{
+			"$lte": request.PriceMax,
+		}})
+	}
+
+	filter := bson.M{}
+	if len(filters) > 0 {
+		filter = bson.M{
+			"$and": filters,
+		}
+	}
+
+	fmt.Printf("Filter: %v\n", filter)
+
+	matchStage := bson.D{{"$match", filter}}
+
+	lookupUserCards := bson.D{{"$lookup", bson.D{
+		{"from", "user_cards"},
+		{"localField", "name"},
+		{"foreignField", "card"},
+		{"as", "user_cards"},
+	},
+	}}
+	fmt.Println(lookupUserCards)
+
+	//skipStage := bson.D{{"$skip", (page - 1) * limit}}
+	//limitStage := bson.D{{"$limit", limit}}
+
+	//groupStage := bson.D{{"$group", bson.D{{"_id", "$podcast"}, {"total", bson.D{{"$sum", "$duration"}}}}}}
+
+	showInfoCursor, err := collection.Aggregate(collection.Context, mongo.Pipeline{
+		matchStage,
+		//lookupUserCards,
+		//	skipStage,
+		//	limitStage,
+	})
+	if err != nil {
+		panic(err)
+	}
+	var showsWithInfo []bson.M
+	if err = showInfoCursor.All(collection.Context, &showsWithInfo); err != nil {
+		panic(err)
+	}
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println(showsWithInfo)
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("")
+	return PaginatedResult{}, nil
+
+	/*
+		db.users.aggregate([
+
+		    // Join with user_info table
+		    {
+		        $lookup:{
+		            from: "userinfo",       // other table name
+		            localField: "userId",   // name of users table field
+		            foreignField: "userId", // name of userinfo table field
+		            as: "user_info"         // alias for userinfo table
+		        }
+		    },
+		    {   $unwind:"$user_info" },     // $unwind used for getting data in object or for one record only
+
+		    // Join with user_role table
+		    {
+		        $lookup:{
+		            from: "userrole",
+		            localField: "userId",
+		            foreignField: "userId",
+		            as: "user_role"
+		        }
+		    },
+		    {   $unwind:"$user_role" },
+
+		    // define some conditions here
+		    {
+		        $match:{
+		            $and:[{"userName" : "admin"}]
+		        }
+		    },
+
+		    // define which fields are you want to fetch
+		    {
+		        $project:{
+		            _id : 1,
+		            email : 1,
+		            userName : 1,
+		            userPhone : "$user_info.phone",
+		            role : "$user_role.role",
+		        }
+		    }
+		]);
+
+	*/
 
 	sort := getSortOptions(request)
 	paginatedData, err := pagination.New(collection.Collection).Limit(limit).Page(page).Filter(filter).Select(projection).Sort(sort).Find()
