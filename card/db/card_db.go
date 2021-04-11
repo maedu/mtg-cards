@@ -206,7 +206,7 @@ func getFilter(request CardSearchRequest) (bson.M, bson.M) {
 		for _, cardGroup := range request.CardGroups {
 			if cardGroup == "Synergy" {
 				synergyFound = true
-			} else {
+			} else if cardGroup != "Collected" {
 				cardGroups = append(cardGroups, cardGroup)
 			}
 		}

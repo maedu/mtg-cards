@@ -105,6 +105,36 @@ func Test_hasRampText(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "Azusa, Lost but Seeking",
+			args: args{
+				card: &db.Card{
+					CardTypes:  []db.CardType{"Legendary Creature"},
+					OracleText: "You may play two additional lands on each of your turns.",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Growth Spiral",
+			args: args{
+				card: &db.Card{
+					CardTypes:  []db.CardType{"Instant"},
+					OracleText: "Draw a card. You may put a land card from your hand onto the battlefield.",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Explore",
+			args: args{
+				card: &db.Card{
+					CardTypes:  []db.CardType{"Instant"},
+					OracleText: "You may play an additional land this turn. Draw a card.",
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

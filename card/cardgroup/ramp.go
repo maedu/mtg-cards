@@ -17,8 +17,10 @@ func calculateRamp(card *db.Card) {
 	}
 }
 
-var rampManaRegex, _ = regexp.Compile("(?i)Adds? (\\{[CBUGRW]\\}|[a-zA-Z ]+mana)")
+var rampManaRegex, _ = regexp.Compile(`(?i)Adds? (\{[CBUGRW]\}|[a-zA-Z ]+mana)`)
 var landCardRegex, _ = regexp.Compile("(?i)(Land|Forest|Plains|Mountain|Swamp|Island) card[^.]+put .+?onto the battlefield")
+var canPlayAdditionalLandRegex, _ = regexp.Compile(`(?i)You may play \w+ additional lands?`)
+var canPutAdditionalLandRegex, _ = regexp.Compile(`(?i)You may put a land card from your hand onto the battlefield`)
 
 var rampCards = []string{
 	"Jeweled Lotus",
@@ -42,7 +44,10 @@ func hasRampText(card *db.Card) bool {
 		}
 	}
 
-	return rampManaRegex.MatchString(card.OracleText) || landCardRegex.MatchString(card.OracleText)
+	return rampManaRegex.MatchString(card.OracleText) ||
+		landCardRegex.MatchString(card.OracleText) ||
+		canPlayAdditionalLandRegex.MatchString(card.OracleText) ||
+		canPutAdditionalLandRegex.MatchString(card.OracleText)
 }
 
 func isRampCard(card *db.Card) bool {

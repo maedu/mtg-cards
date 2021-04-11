@@ -22,6 +22,7 @@ var nonCardDraw = []string{
 	"Veil of Summer",
 	"The Locust God",
 	"Chasm Skulker",
+	"Nadir Kraken",
 }
 
 func isDraw(card *db.Card) bool {
