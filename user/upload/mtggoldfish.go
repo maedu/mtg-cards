@@ -4,8 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-
-	"github.com/maedu/mtg-cards/user/db"
 )
 
 type mtgGoldFish struct{}
@@ -25,11 +23,11 @@ func (u mtgGoldFish) name() string {
 	return "MTGGoldfish"
 }
 
-func (u mtgGoldFish) parse(reader *csv.Reader, request ParseRequest) (bool, []*db.UserCard, error) {
+func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*ParsedCard, error) {
 	headerParsed := false
 	// Iterate through the records
 	rowCount := 0
-	cardMap := map[string]*db.UserCard{}
+	parsedCards := []*ParsedCard{}
 	for {
 		// Read each record from csv
 		record, err := reader.Read()
@@ -61,20 +59,13 @@ func (u mtgGoldFish) parse(reader *csv.Reader, request ParseRequest) (bool, []*d
 				return false, nil, fmt.Errorf("parsing quantity failed. '%s': %w", quantityS, err)
 			}
 
-			if cardMap[name] == nil {
-				cardMap[name] = &db.UserCard{
-					Name:   name,
-					Sets:   []db.Set{},
-					UserID: request.UserID,
-				}
+			parsedCard := ParsedCard{
+				Name:     name,
+				Set:      setID,
+				Quantity: quantity,
 			}
 
-			cardMap[name].Sets = append(cardMap[name].Sets, db.Set{
-				ID:       setID,
-				Quantity: quantity,
-				Source:   request.Source,
-			})
-
+			parsedCards = append(parsedCards, &parsedCard)
 		}
 
 		rowCount++
@@ -83,11 +74,5 @@ func (u mtgGoldFish) parse(reader *csv.Reader, request ParseRequest) (bool, []*d
 	if !headerParsed {
 		return false, nil, nil
 	}
-
-	userCards := []*db.UserCard{}
-	for _, card := range cardMap {
-		userCards = append(userCards, card)
-	}
-
-	return true, userCards, nil
+	return true, parsedCards, nil
 }

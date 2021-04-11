@@ -31,7 +31,7 @@ func handleUploadCards(c *gin.Context) {
 
 func uploadCards(c *gin.Context, request ParseRequest) {
 
-	cards, err := parseUserCards(c, request)
+	parsedCards, err := parseUserCards(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
@@ -43,8 +43,58 @@ func uploadCards(c *gin.Context, request ParseRequest) {
 		return
 	}
 
-	err = collection.ReplaceAllOfUserAndSource(request.UserID, request.Source, cards)
+	existingCards, err := collection.GetUserCardsByUserID(request.UserID)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Create a map for easier updating
+	cardMap := map[string]*db.UserCard{}
+	for _, card := range existingCards {
+		cardMap[card.Name] = card
+	}
+
+	// Merge existing and parsed cards
+	var found bool
+	for _, parsedCard := range parsedCards {
+		set := db.Set{
+			ID:       parsedCard.Set,
+			Quantity: parsedCard.Quantity,
+			Source:   request.Source,
+		}
+
+		if cardMap[parsedCard.Name] != nil {
+			found = false
+			for _, set := range cardMap[parsedCard.Name].Sets {
+
+				if set.ID == parsedCard.Set {
+					set.Quantity = parsedCard.Quantity
+					found = true
+					break
+				}
+			}
+			if !found {
+				cardMap[parsedCard.Name].Sets = append(cardMap[parsedCard.Name].Sets, set)
+			}
+		} else {
+			card := db.UserCard{
+				Name:   parsedCard.Name,
+				UserID: request.UserID,
+				Sets:   []db.Set{set},
+			}
+			cardMap[parsedCard.Name] = &card
+		}
+	}
+
+	cards := []*db.UserCard{}
+	for _, card := range cardMap {
+		cards = append(cards, card)
+	}
+
+	err = collection.ReplaceAllOfUser(request.UserID, cards)
+	if err != nil {
+		fmt.Printf("Error while storing: %v", err)
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -66,7 +116,7 @@ func getCsvReader(content *multipart.File) *csv.Reader {
 	return r
 }
 
-func parseUserCards(c *gin.Context, request ParseRequest) ([]*db.UserCard, error) {
+func parseUserCards(c *gin.Context) ([]*ParsedCard, error) {
 
 	handlers := []handler{mtgGoldFish{}}
 
@@ -78,13 +128,13 @@ func parseUserCards(c *gin.Context, request ParseRequest) ([]*db.UserCard, error
 		}
 
 		csvReader := getCsvReader(content)
-		success, cards, err := handler.parse(csvReader, request)
+		success, parsedCards, err := handler.parse(csvReader)
 		if err != nil {
 			fmt.Println(err)
 		}
 		if success {
 			fmt.Printf("Upload done with handler %s", handler.name())
-			return cards, nil
+			return parsedCards, nil
 		}
 	}
 

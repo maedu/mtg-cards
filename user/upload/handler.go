@@ -4,8 +4,6 @@ import (
 	"encoding/csv"
 	"strconv"
 	"strings"
-
-	"github.com/maedu/mtg-cards/user/db"
 )
 
 type ParseRequest struct {
@@ -13,8 +11,14 @@ type ParseRequest struct {
 	Source string
 }
 
+type ParsedCard struct {
+	Name     string
+	Set      string
+	Quantity int64
+}
+
 type handler interface {
-	parse(*csv.Reader, ParseRequest) (bool, []*db.UserCard, error)
+	parse(*csv.Reader) (bool, []*ParsedCard, error)
 	name() string
 }
 
