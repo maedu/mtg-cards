@@ -3,22 +3,22 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserCard struct {
-	ID       string `bson:"_id" json:"-"`
-	UserID   string `bson:"user_id" json:"-"`
-	Card     string `bson:"card" json:"card"`
-	Quantity int64  `bson:"quantity" json:"quantity"`
-	Source   string `bson:"source" json:"source"`
+	ID           string `bson:"_id" json:"-"`
+	UserID       string `bson:"user_id" json:"-"`
+	Card         string `bson:"card" json:"card"`
+	SetID        string `bson:"set_id" json:"setId"`
+	CardAndSetID string `bson:"card_and_set_id" json:"-"`
+	Quantity     int64  `bson:"quantity" json:"quantity"`
+	Source       string `bson:"source" json:"source"`
 }
 
 // UserCardCollection ...
@@ -92,44 +92,23 @@ func (collection *UserCardCollection) GetUserCardsByUserID(userID string) ([]Use
 
 }
 
-// UpsertForUserAndSource inserts or updates the user card in a mongo db
-func (collection *UserCardCollection) UpsertForUserAndSource(userID string, source string, userCard *UserCard) error {
-	ctx := collection.Context
-
-	if userCard.ID == "" {
-		userCard.ID = primitive.NewObjectID().Hex()
-	}
-
-	filter := bson.M{"$and": []bson.M{
-		{"user_id": bson.M{"$eq": userID}},
-		{"source": bson.M{"$eq": source}},
-		{"card": bson.M{"$eq": userCard.Card}},
-	}}
-
-	upsert := true
-	options := &options.ReplaceOptions{
-		Upsert: &upsert,
-	}
-
-	result, err := collection.Collection.ReplaceOne(ctx, filter, userCard, options)
-
-	if err != nil {
-		return fmt.Errorf("replaceOne failed: %w", err)
-	}
-	if result == nil {
-		return errors.New("could not delete a UserCards")
-	}
-	return nil
-}
-
 // ReplaceAllOfUserAndSource first delete all for userId & source and then create many cards in a mongo db
 func (collection *UserCardCollection) ReplaceAllOfUserAndSource(userID string, source string, userCards []*UserCard) error {
 	ctx := collection.Context
 
+	cardAndSetIDs := []string{}
+	for _, card := range userCards {
+		cardAndSetID := getCardAndSetID(card)
+		cardAndSetIDs = append(cardAndSetIDs, cardAndSetID)
+		card.CardAndSetID = cardAndSetID
+	}
+
 	filter := bson.M{"$and": []bson.M{
 		{"user_id": bson.M{"$eq": userID}},
 		{"source": bson.M{"$eq": source}},
+		{"card_and_set_id": bson.M{"$in": cardAndSetIDs}},
 	}}
+
 	result, err := collection.Collection.DeleteMany(ctx, filter)
 	if err != nil {
 		return err
@@ -148,4 +127,8 @@ func (collection *UserCardCollection) ReplaceAllOfUserAndSource(userID string, s
 
 	_, err = collection.Collection.InsertMany(ctx, ui)
 	return err
+}
+
+func getCardAndSetID(card *UserCard) string {
+	return card.Card + " " + card.SetID
 }

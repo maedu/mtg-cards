@@ -56,6 +56,7 @@ func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*db.UserCard, error) {
 			name := mtgGoldFishFields.value("Card", record)
 			quantityS := mtgGoldFishFields.value("Quantity", record)
 			quantity, err := parseQuantity(quantityS)
+			setID := mtgGoldFishFields.value("Set ID", record)
 			if err != nil {
 				return false, nil, fmt.Errorf("parsing quantity failed. '%s': %w", quantityS, err)
 			}
@@ -63,6 +64,7 @@ func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*db.UserCard, error) {
 			card := &db.UserCard{
 				Card:     name,
 				Quantity: quantity,
+				SetID:    setID,
 			}
 			userCards = append(userCards, card)
 
