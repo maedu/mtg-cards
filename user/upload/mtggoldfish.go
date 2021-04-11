@@ -29,7 +29,8 @@ func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*db.UserCard, error) {
 	headerParsed := false
 	// Iterate through the records
 	rowCount := 0
-	userCards := []*db.UserCard{}
+
+	userCardMap := map[string]*db.UserCard{}
 	for {
 		// Read each record from csv
 		record, err := reader.Read()
@@ -60,12 +61,14 @@ func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*db.UserCard, error) {
 				return false, nil, fmt.Errorf("parsing quantity failed. '%s': %w", quantityS, err)
 			}
 
-			card := &db.UserCard{
-				Card:     name,
-				Quantity: quantity,
+			if userCardMap[name] == nil {
+				userCardMap[name] = &db.UserCard{
+					Card:     name,
+					Quantity: quantity,
+				}
+			} else {
+				userCardMap[name].Quantity = userCardMap[name].Quantity + quantity
 			}
-			userCards = append(userCards, card)
-
 		}
 
 		rowCount++
@@ -73,6 +76,12 @@ func (u mtgGoldFish) parse(reader *csv.Reader) (bool, []*db.UserCard, error) {
 
 	if !headerParsed {
 		return false, nil, nil
+	}
+
+	userCards := []*db.UserCard{}
+
+	for _, card := range userCardMap {
+		userCards = append(userCards, card)
 	}
 
 	return true, userCards, nil
