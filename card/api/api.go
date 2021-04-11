@@ -182,23 +182,23 @@ func setUserQuantityOnCards(c *gin.Context, cards []*db.Card) error {
 		if err != nil {
 			return fmt.Errorf("getting cards by userID failed: %w", err)
 		}
-		userCardMap := map[string]int64{}
+		userCardMap := map[string]bool{}
 		for _, card := range userCards {
-			userCardMap[card.Card] = card.Quantity
+			userCardMap[card.Name] = true
 		}
 
 		for _, card := range cards {
-			card.UserQuantity = userCardMap[card.Name]
+			card.InCollection = userCardMap[card.Name]
 
-			if card.UserQuantity == 0 {
+			if !card.InCollection {
 				index := strings.Index(card.Name, " // ")
 				if index > -1 {
 					// Special Use-Case: Two-sided collected cards only contain first side, but card contains both in name
 					nameOfFirstSide := card.Name[:index]
-					card.UserQuantity = userCardMap[nameOfFirstSide]
+					card.InCollection = userCardMap[nameOfFirstSide]
 				}
 			}
-			if card.UserQuantity > 0 {
+			if card.InCollection {
 				card.CardGroups = append(card.CardGroups, "Collected")
 			}
 		}

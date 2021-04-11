@@ -8,8 +8,13 @@ import (
 	"github.com/maedu/mtg-cards/user/db"
 )
 
+type ParseRequest struct {
+	UserID string
+	Source string
+}
+
 type handler interface {
-	parse(*csv.Reader) (bool, []*db.UserCard, error)
+	parse(*csv.Reader, ParseRequest) (bool, []*db.UserCard, error)
 	name() string
 }
 

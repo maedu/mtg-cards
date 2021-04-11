@@ -25,20 +25,16 @@ func handleUploadCards(c *gin.Context) {
 	}
 
 	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
-		uploadCards(c, userID, source)
+		uploadCards(c, ParseRequest{UserID: userID, Source: source})
 	}
 }
 
-func uploadCards(c *gin.Context, user string, source string) {
+func uploadCards(c *gin.Context, request ParseRequest) {
 
-	cards, err := parseUserCards(c)
+	cards, err := parseUserCards(c, request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
-	}
-	for _, card := range cards {
-		card.UserID = user
-		card.Source = source
 	}
 	collection, err := db.GetUserCardCollection()
 	defer collection.Disconnect()
@@ -47,7 +43,7 @@ func uploadCards(c *gin.Context, user string, source string) {
 		return
 	}
 
-	err = collection.ReplaceAllOfUserAndSource(user, source, cards)
+	err = collection.ReplaceAllOfUserAndSource(request.UserID, request.Source, cards)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -70,7 +66,7 @@ func getCsvReader(content *multipart.File) *csv.Reader {
 	return r
 }
 
-func parseUserCards(c *gin.Context) ([]*db.UserCard, error) {
+func parseUserCards(c *gin.Context, request ParseRequest) ([]*db.UserCard, error) {
 
 	handlers := []handler{mtgGoldFish{}}
 
@@ -82,7 +78,7 @@ func parseUserCards(c *gin.Context) ([]*db.UserCard, error) {
 		}
 
 		csvReader := getCsvReader(content)
-		success, cards, err := handler.parse(csvReader)
+		success, cards, err := handler.parse(csvReader, request)
 		if err != nil {
 			fmt.Println(err)
 		}
