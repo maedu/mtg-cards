@@ -293,10 +293,10 @@ func (collection *CardCollection) GetCollectedCardsPaginated(limit int64, page i
 	matchStage := bson.M{"$match": filter}
 
 	lookupUserCards := bson.M{"$lookup": bson.D{
-		{"from", "user_cards"},
-		{"localField", "name"},
-		{"foreignField", "card"},
-		{"as", "user_cards"},
+		primitive.E{Key: "from", Value: "user_cards"},
+		primitive.E{Key: "localField", Value: "name"},
+		primitive.E{Key: "foreignField", Value: "name"},
+		primitive.E{Key: "as", Value: "user_cards"},
 	},
 	}
 	fmt.Println(lookupUserCards)
