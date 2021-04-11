@@ -21,13 +21,6 @@ type UserCard struct {
 	Source   string `bson:"source" json:"source"`
 }
 
-type UserCardForUpsert struct {
-	UserID   string `bson:"user_id" json:"-"`
-	Card     string `bson:"card" json:"card"`
-	Quantity int64  `bson:"quantity" json:"quantity"`
-	Source   string `bson:"source" json:"source"`
-}
-
 // UserCardCollection ...
 type UserCardCollection struct {
 	*mongo.Client
@@ -103,25 +96,22 @@ func (collection *UserCardCollection) GetUserCardsByUserID(userID string) ([]Use
 func (collection *UserCardCollection) UpsertForUserAndSource(userID string, source string, userCard *UserCard) error {
 	ctx := collection.Context
 
+	if userCard.ID == "" {
+		userCard.ID = primitive.NewObjectID().Hex()
+	}
+
 	filter := bson.M{"$and": []bson.M{
 		{"user_id": bson.M{"$eq": userID}},
 		{"source": bson.M{"$eq": source}},
 		{"card": bson.M{"$eq": userCard.Card}},
 	}}
 
-	UserCardForUpsert := UserCardForUpsert{
-		Card:     userCard.Card,
-		UserID:   userCard.UserID,
-		Source:   userCard.Source,
-		Quantity: userCard.Quantity,
-	}
-
 	upsert := true
 	options := &options.ReplaceOptions{
 		Upsert: &upsert,
 	}
 
-	result, err := collection.Collection.ReplaceOne(ctx, filter, UserCardForUpsert, options)
+	result, err := collection.Collection.ReplaceOne(ctx, filter, userCard, options)
 
 	if err != nil {
 		return fmt.Errorf("replaceOne failed: %w", err)
@@ -136,15 +126,9 @@ func (collection *UserCardCollection) UpsertForUserAndSource(userID string, sour
 func (collection *UserCardCollection) ReplaceAllOfUserAndSource(userID string, source string, userCards []*UserCard) error {
 	ctx := collection.Context
 
-	cardNames := []string{}
-	for _, card := range userCards {
-		cardNames = append(cardNames, card.Card)
-	}
-
 	filter := bson.M{"$and": []bson.M{
 		{"user_id": bson.M{"$eq": userID}},
 		{"source": bson.M{"$eq": source}},
-		{"card": bson.M{"$in": cardNames}},
 	}}
 	result, err := collection.Collection.DeleteMany(ctx, filter)
 	if err != nil {
