@@ -3,12 +3,14 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserCard struct {
@@ -88,6 +90,36 @@ func (collection *UserCardCollection) GetUserCardsByUserID(userID string) ([]Use
 	}
 	return usercards, nil
 
+}
+
+// UpsertForUserAndSource inserts or updates the user card in a mongo db
+func (collection *UserCardCollection) UpsertForUserAndSource(userID string, source string, userCard *UserCard) error {
+	ctx := collection.Context
+
+	if userCard.ID == "" {
+		userCard.ID = primitive.NewObjectID().Hex()
+	}
+
+	filter := bson.M{"$and": []bson.M{
+		{"user_id": bson.M{"$eq": userID}},
+		{"source": bson.M{"$eq": source}},
+		{"card": bson.M{"$eq": userCard.Card}},
+	}}
+
+	upsert := true
+	options := &options.ReplaceOptions{
+		Upsert: &upsert,
+	}
+
+	result, err := collection.Collection.ReplaceOne(ctx, filter, userCard, options)
+
+	if err != nil {
+		return fmt.Errorf("replaceOne failed: %w", err)
+	}
+	if result == nil {
+		return errors.New("could not delete a UserCards")
+	}
+	return nil
 }
 
 // ReplaceAllOfUserAndSource first delete all for userId & source and then create many cards in a mongo db

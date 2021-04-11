@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"time"
 
 	"github.com/dimchansky/utfbom"
 	"github.com/gin-gonic/gin"
@@ -47,10 +48,28 @@ func uploadCards(c *gin.Context, user string, source string) {
 		return
 	}
 
-	err = collection.ReplaceAllOfUserAndSource(user, source, cards)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
-		return
+	doInBulk := false
+	if doInBulk {
+		start := time.Now()
+		err = collection.ReplaceAllOfUserAndSource(user, source, cards)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		elapsed := time.Since(start)
+		fmt.Printf("Bulk took %s\n", elapsed)
+	} else {
+		start := time.Now()
+		for _, card := range cards {
+			err = collection.UpsertForUserAndSource(user, source, card)
+			if err != nil {
+				fmt.Printf("Error storing %s: %v", card.Card, err)
+				c.JSON(http.StatusInternalServerError, err)
+				return
+			}
+		}
+		elapsed := time.Since(start)
+		fmt.Printf("Individual took %s\n", elapsed)
 	}
 
 	c.JSON(http.StatusOK, cards)
