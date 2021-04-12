@@ -186,7 +186,8 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		}
 	}
 
-	isCommander := strings.Contains(scryfallCard.TypeLine, "Legendary Creature") || strings.Contains(scryfallCard.TypeLine, "Legendary Snow Creature") || strings.Contains(scryfallCard.OracleText, "can be your commander")
+	isCommander := (strings.Contains(scryfallCard.TypeLine, "Legendary") && strings.Contains(scryfallCard.TypeLine, "Creature")) ||
+		strings.Contains(scryfallCard.OracleText, "can be your commander")
 
 	rarity := scryfallCard.Rarity
 	if rarity == "mythic" {
