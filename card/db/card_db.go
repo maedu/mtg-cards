@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -55,13 +56,12 @@ type Card struct {
 	Cmc             float64            `json:"cmc"`
 	TypeLine        string             `bson:"type_line" json:"typeLine"`
 	CardTypes       []CardType         `bson:"card_types" json:"cardTypes"`
-	OracleText      string             `bson:"oracle_text" json:"oracleText"`
+	OracleText      string             `bson:"oracle_text" json:"-"`
 	Colors          []string           `json:"colors"`
 	ColorIdentity   []string           `json:"colorIdentity"`
 	Keywords        []string           `json:"keywords"`
 	LegalInComander bool               `json:"legalInCommander"`
 	SetName         string             `bson:"set_name" json:"setName"`
-	RulingsURL      string             `json:"rulingsURL"`
 	Rarity          string             `json:"rarity"`
 	EdhrecRank      int                `json:"edhrecRank"`
 	Price           float64            `json:"price"`
@@ -195,9 +195,31 @@ func getFilter(request CardSearchRequest) (bson.M, bson.M) {
 	}
 
 	if request.Colors != nil && len(request.Colors) > 0 {
-		filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{"$elemMatch": bson.M{
-			"$nin": request.Colors,
-		}}}})
+		filteredColors := []string{}
+		muliColorSelected := false
+		for _, color := range request.Colors {
+			if color == "M" {
+				muliColorSelected = true
+			} else {
+				filteredColors = append(filteredColors, color)
+			}
+		}
+		sort.Strings(filteredColors)
+
+		if muliColorSelected {
+			filters = append(filters, bson.M{"colors.1": bson.M{"$exists": true}})
+
+			if len(filteredColors) > 0 {
+				// Include cards which match exactly the selected colors
+				filters = append(filters, bson.M{"colors": bson.M{"$eq": filteredColors}})
+			}
+
+		} else {
+			// Include cards have at least one of the selected colors, but no others.
+			filters = append(filters, bson.M{"colors": bson.M{"$not": bson.M{"$elemMatch": bson.M{
+				"$nin": filteredColors,
+			}}}})
+		}
 	}
 
 	if request.CardGroups != nil && len(request.CardGroups) > 0 {
@@ -250,7 +272,7 @@ func getFilter(request CardSearchRequest) (bson.M, bson.M) {
 		}
 	}
 
-	fmt.Printf("Filter: %v", filter)
+	fmt.Printf("\nFilter: %v\n", filter)
 
 	return filter, projection
 

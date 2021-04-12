@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -173,7 +174,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 	imageURLs := map[string]string{}
 
 	for size, url := range scryfallCard.ImageURLs {
-		if size == scryfallDB.Large || size == scryfallDB.Normal {
+		if size == scryfallDB.Normal {
 			imageURLs[size] = url
 		}
 	}
@@ -216,6 +217,7 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 	if len(colors) == 0 {
 		colors = append(colors, "C")
 	}
+	sort.Strings(colors)
 
 	var cardSynergies map[string]float64
 	if synergy, ok := (*synergies)[scryfallCard.Name]; ok {
@@ -261,7 +263,6 @@ func transformCard(scryfallCard *scryfallDB.ScryfallCard, synergies *map[string]
 		Keywords:        scryfallCard.Keywords,
 		LegalInComander: legalInCommander,
 		SetName:         scryfallCard.SetName,
-		RulingsURL:      scryfallCard.RulingsURI,
 		Rarity:          scryfallCard.Rarity,
 		EdhrecRank:      scryfallCard.EdhrecRank,
 		Layout:          scryfallCard.Layout,
