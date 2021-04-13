@@ -10,7 +10,7 @@ func CalculateCardGroups(card *db.Card) {
 	calculateBoardWipes(card)
 	calculateRemoval(card)
 	calculateLand(card)
-	calculateCreature(card)
+	calculateCardTYpes(card)
 	calculateStandalone(card)
 	calculateEnhancers(card)
 	calculateEnablers(card)

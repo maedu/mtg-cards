@@ -7,16 +7,17 @@ import (
 )
 
 func calculateLand(card *db.Card) {
-	if isLand(card) {
+	if isLandOnCardFace(card) {
 		card.CardGroups = append(card.CardGroups, "Land")
 		card.SearchText = fmt.Sprintf("%s, land", card.SearchText)
 	}
 }
 
-func isLand(card *db.Card) bool {
+func isLandOnCardFace(card *db.Card) bool {
 	for _, cardType := range card.CardTypes {
 		if cardType == db.Land {
-			return true
+			// CardType = Land is handled in cardtypes.go
+			return false
 		}
 	}
 
