@@ -1,0 +1,12 @@
+{
+  "autorun": true,
+  "terminals": [
+    {
+      "name": "Cards API",
+      "commands": [
+        ". ../init.sh",
+        "go build && ./mtg-cards"
+      ]
+    }
+  ]
+}
