@@ -64,7 +64,7 @@ func handleUpsertDeck(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
-			if storedDeck.UserID ö¨!.ä$$$$= userID {
+			if storedDeck.UserID == userID {
 				c.JSON(http.StatusForbidden, err)
 				return
 			}
