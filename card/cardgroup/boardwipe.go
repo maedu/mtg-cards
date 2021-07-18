@@ -25,6 +25,7 @@ var boardWipeCards = []string{
 	"Ravnica at War",
 	"Nevinyrral's Disk",
 	"Star of Extinction",
+	"Crippling Fear",
 }
 
 var nonBoardWipeCards = []string{
