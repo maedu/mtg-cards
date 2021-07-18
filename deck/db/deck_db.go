@@ -7,7 +7,9 @@ import (
 	cardDB "github.com/maedu/mtg-cards/card/db"
 	"github.com/maedu/mtg-cards/db"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Settings struct {
@@ -17,15 +19,15 @@ type Settings struct {
 }
 
 type Deck struct {
-	ID          string        `bson:"_id" json:"-"`
-	UserID      string        `bson:"user_id" json:"-"`
-	URLHash     string        `bson:"urlHash" json:"urlHash"`
-	Name        string        `bson:"name" json:"name"`
-	Description string        `bson:"description" json:"description"`
-	Commanders  []cardDB.Card `bson:"commanders" json:"commanders"`
-	Cards       []cardDB.Card `bson:"cards" json:"cards"`
-	Library     []cardDB.Card `bson:"library" json:"library"`
-	Settings    Settings      `bson:"settings" json:"settings"`
+	ID          primitive.ObjectID `bson:"_id" json:"-"`
+	UserID      string             `bson:"user_id" json:"-"`
+	URLHash     string             `bson:"urlHash" json:"urlHash"`
+	Name        string             `bson:"name" json:"name"`
+	Description string             `bson:"description" json:"description"`
+	Commanders  []cardDB.Card      `bson:"commanders" json:"commanders"`
+	Cards       []cardDB.Card      `bson:"cards" json:"cards"`
+	Library     []cardDB.Card      `bson:"library" json:"library"`
+	Settings    Settings           `bson:"settings" json:"settings"`
 }
 
 // DeckCollection ...
@@ -119,4 +121,41 @@ func (collection *DeckCollection) GetDeckByURLHash(urlHash string) (*Deck, error
 		return nil, err
 	}
 	return deck, nil
+}
+
+// Create creating a deck in a mongo
+func (collection *DeckCollection) Create(deck *Deck) (primitive.ObjectID, error) {
+	ctx := collection.Context
+	deck.ID = primitive.NewObjectID()
+
+	result, err := collection.Collection.InsertOne(ctx, deck)
+	if err != nil {
+		log.Printf("Could not create Deck: %v", err)
+		return primitive.NilObjectID, err
+	}
+	oid := result.InsertedID.(primitive.ObjectID)
+	return oid, nil
+}
+
+func (collection *DeckCollection) Update(deck *Deck) (*Deck, error) {
+	ctx := collection.Context
+	var updatedDeck *Deck
+
+	update := bson.M{
+		"$deck": deck,
+	}
+
+	upsert := true
+	after := options.After
+	opt := options.FindOneAndUpdateOptions{
+		Upsert:         &upsert,
+		ReturnDocument: &after,
+	}
+
+	err := collection.Collection.FindOneAndUpdate(ctx, bson.M{"_id": deck.ID}, update, &opt).Decode(&updatedDeck)
+	if err != nil {
+		log.Printf("Could not save Deck: %v", err)
+		return nil, err
+	}
+	return updatedDeck, nil
 }
