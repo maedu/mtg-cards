@@ -5,6 +5,7 @@ import (
 
 	env "bitbucket.org/spinnerweb/accounting_common/env"
 	cardApi "github.com/maedu/mtg-cards/card/api"
+	deckApi "github.com/maedu/mtg-cards/deck/api"
 	"github.com/maedu/mtg-cards/draft/sealed"
 	edhrecApi "github.com/maedu/mtg-cards/edhrec/api"
 	"github.com/maedu/mtg-cards/server"
@@ -16,6 +17,7 @@ import (
 func main() {
 	server := server.Configure()
 	cardApi.Setup(server)
+	deckApi.Setup(server)
 	setApi.Setup(server)
 	sealed.Setup(server)
 	edhrecApi.Setup(server)
