@@ -22,6 +22,7 @@ type Deck struct {
 func Setup(r *gin.Engine) {
 	r.GET("/api/decks/:urlHash", handlGetDeck)
 	r.POST("/api/decks", handleUpsertDeck)
+	r.GET("/api/decks", handleGetUserDecks)
 }
 func handlGetDeck(c *gin.Context) {
 	urlHash := c.Param("urlHash")
@@ -44,6 +45,37 @@ func handlGetDeck(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, deckWithCards)
+}
+
+func handleGetUserDecks(c *gin.Context) {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
+
+		collection, err := db.GetDeckCollection()
+		defer collection.Disconnect()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		decks, err := collection.GetDecksByUserID(userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		decksWithCards := []Deck{}
+		for _, deck := range decks {
+			deckWithCards, err := dbDeckToDeckForOverview(deck)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, err)
+				return
+			}
+			decksWithCards = append(decksWithCards, deckWithCards)
+		}
+
+		c.JSON(http.StatusOK, decksWithCards)
+
+	}
+
+	c.JSON(http.StatusUnauthorized, nil)
 }
 
 func handleUpsertDeck(c *gin.Context) {
@@ -151,6 +183,22 @@ func cardListToNames(cards []*cardDB.Card) []string {
 		names = append(names, card.Name)
 	}
 	return names
+}
+
+func dbDeckToDeckForOverview(deck *db.Deck) (Deck, error) {
+	collection, err := cardDB.GetCardCollection()
+	defer collection.Disconnect()
+	if err != nil {
+		return Deck{}, err
+	}
+	commanders, err := collection.GetCardsByNames(deck.Commanders)
+	if err != nil {
+		return Deck{}, err
+	}
+	return Deck{
+		Commanders: commanders,
+		Settings:   deck.Settings,
+	}, nil
 }
 
 func dbDeckToDeck(deck *db.Deck) (Deck, error) {
