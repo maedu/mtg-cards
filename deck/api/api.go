@@ -1,18 +1,30 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	cardDB "github.com/maedu/mtg-cards/card/db"
 	"github.com/maedu/mtg-cards/deck/db"
 	"github.com/maedu/mtg-cards/user/auth"
 	"github.com/maedu/mtg-cards/util"
 )
 
+type Deck struct {
+	URLHash     string         `json:"urlHash"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Commanders  []*cardDB.Card `json:"commanders"`
+	Deck        []*cardDB.Card `json:"deck"`
+	Library     []*cardDB.Card `json:"library"`
+	Settings    db.Settings    `json:"settings"`
+}
+
 // Setup Setup REST API
 func Setup(r *gin.Engine) {
-	r.GET("/api/deck/:urlHash", handlGetDeck)
-	r.POST("/api/deck", handleUpsertDeck)
+	r.GET("/api/decks/:urlHash", handlGetDeck)
+	r.POST("/api/decks", handleUpsertDeck)
 }
 func handlGetDeck(c *gin.Context) {
 	urlHash := c.Param("urlHash")
@@ -28,13 +40,27 @@ func handlGetDeck(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, deck)
+	deckWithCards, err := dbDeckToDeck(deck)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, deckWithCards)
 }
 
 func handleUpsertDeck(c *gin.Context) {
 	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
-		var deck *db.Deck
-		c.BindJSON(deck)
+		var inputDeck Deck
+		err := c.BindJSON(&inputDeck)
+		if err != nil {
+			fmt.Printf("%+v", err)
+			// c.BindJSON already sets the header to 400
+			return
+		}
+
+		deck := deckToDBDeck(&inputDeck)
+
 		collection, err := db.GetDeckCollection()
 		defer collection.Disconnect()
 		if err != nil {
@@ -52,12 +78,12 @@ func handleUpsertDeck(c *gin.Context) {
 			}
 			deck.URLHash = hash
 			deck.UserID = userID
-			_, err = collection.Create(deck)
+			_, err = collection.Create(&deck)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
-			storedDeck = deck
+			storedDeck = &deck
 		} else {
 			storedDeck, err = collection.GetDeckByURLHash(deck.URLHash)
 			if err != nil {
@@ -69,7 +95,7 @@ func handleUpsertDeck(c *gin.Context) {
 				return
 			}
 
-			storedDeck, err = collection.Update(storedDeck)
+			storedDeck, err = collection.Update(&deck)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
@@ -77,6 +103,7 @@ func handleUpsertDeck(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, storedDeck)
+		return
 
 	}
 	c.JSON(http.StatusUnauthorized, nil)
@@ -96,4 +123,54 @@ func generateUniqueURLHash(collection *db.DeckCollection) (string, error) {
 		hash = util.RandomString(20)
 	}
 	return hash, nil
+}
+
+func deckToDBDeck(deck *Deck) db.Deck {
+	return db.Deck{
+		URLHash:     deck.URLHash,
+		Name:        deck.Name,
+		Description: deck.Description,
+		Commanders:  cardListToNames(deck.Commanders),
+		Deck:        cardListToNames(deck.Deck),
+		Library:     cardListToNames(deck.Library),
+		Settings:    deck.Settings,
+	}
+}
+
+func cardListToNames(cards []*cardDB.Card) []string {
+	names := []string{}
+	for _, card := range cards {
+		names = append(names, card.Name)
+	}
+	return names
+}
+
+func dbDeckToDeck(deck *db.Deck) (Deck, error) {
+	collection, err := cardDB.GetCardCollection()
+	defer collection.Disconnect()
+	if err != nil {
+		return Deck{}, err
+	}
+	commanders, err := collection.GetCardsByNames(deck.Commanders)
+	if err != nil {
+		return Deck{}, err
+	}
+	deckCards, err := collection.GetCardsByNames(deck.Deck)
+	if err != nil {
+		return Deck{}, err
+	}
+	library, err := collection.GetCardsByNames(deck.Library)
+	if err != nil {
+		return Deck{}, err
+	}
+
+	return Deck{
+		URLHash:     deck.URLHash,
+		Name:        deck.Name,
+		Description: deck.Description,
+		Commanders:  commanders,
+		Deck:        deckCards,
+		Library:     library,
+		Settings:    deck.Settings,
+	}, nil
 }
