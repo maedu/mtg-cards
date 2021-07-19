@@ -57,6 +57,7 @@ func handleUpsertDeck(c *gin.Context) {
 		}
 
 		deck := deckToDBDeck(&inputDeck)
+		deck.UserID = userID
 
 		collection, err := db.GetDeckCollection()
 		defer collection.Disconnect()
@@ -68,13 +69,13 @@ func handleUpsertDeck(c *gin.Context) {
 		var storedDeck *db.Deck
 		if deck.Settings.URLHash == "" {
 			// New deck
+			fmt.Println("New Deck")
 			hash, err := generateUniqueURLHash(&collection)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
 			deck.Settings.URLHash = hash
-			deck.UserID = userID
 			_, err = collection.Create(&deck)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
@@ -82,24 +83,37 @@ func handleUpsertDeck(c *gin.Context) {
 			}
 			storedDeck = &deck
 		} else {
+			fmt.Printf("Update Deck: url = %s\n", deck.Settings.URLHash)
 			storedDeck, err = collection.GetDeckByURLHash(deck.Settings.URLHash)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
-			if storedDeck.UserID == userID {
-				c.JSON(http.StatusForbidden, err)
-				return
-			}
-
-			storedDeck, err = collection.Update(&deck)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, err)
-				return
+			if storedDeck != nil {
+				fmt.Printf("Stored deck found, %s == %s\n", storedDeck.UserID, userID)
+				if storedDeck.UserID != userID {
+					c.JSON(http.StatusForbidden, err)
+					return
+				}
+				deck.ID = storedDeck.ID
+				storedDeck, err = collection.Update(&deck)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, err)
+					return
+				}
+			} else {
+				// Special case: Deck does not exist in DB
+				fmt.Println("Special case")
+				_, err = collection.Create(&deck)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, err)
+					return
+				}
+				storedDeck = &deck
 			}
 		}
 
-		c.JSON(http.StatusOK, storedDeck)
+		c.JSON(http.StatusOK, storedDeck.Settings.URLHash)
 		return
 
 	}

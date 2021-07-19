@@ -105,7 +105,7 @@ func (collection *DeckCollection) GetDeckByURLHash(urlHash string) (*Deck, error
 	var deck *Deck
 	ctx := collection.Context
 
-	result := collection.Collection.FindOne(ctx, bson.D{bson.E{Key: "urlHash", Value: urlHash}})
+	result := collection.Collection.FindOne(ctx, bson.D{bson.E{Key: "settings.urlHash", Value: urlHash}})
 	if result == nil {
 		return nil, nil
 	}
@@ -141,7 +141,7 @@ func (collection *DeckCollection) Update(deck *Deck) (*Deck, error) {
 	var updatedDeck *Deck
 
 	update := bson.M{
-		"$deck": deck,
+		"$set": deck,
 	}
 
 	upsert := true
