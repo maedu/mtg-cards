@@ -12,13 +12,10 @@ import (
 )
 
 type Deck struct {
-	URLHash     string         `json:"urlHash"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Commanders  []*cardDB.Card `json:"commanders"`
-	Deck        []*cardDB.Card `json:"deck"`
-	Library     []*cardDB.Card `json:"library"`
-	Settings    db.Settings    `json:"settings"`
+	Commanders []*cardDB.Card `json:"commanders"`
+	Deck       []*cardDB.Card `json:"deck"`
+	Library    []*cardDB.Card `json:"library"`
+	Settings   db.Settings    `json:"settings"`
 }
 
 // Setup Setup REST API
@@ -69,14 +66,14 @@ func handleUpsertDeck(c *gin.Context) {
 		}
 
 		var storedDeck *db.Deck
-		if deck.URLHash == "" {
+		if deck.Settings.URLHash == "" {
 			// New deck
 			hash, err := generateUniqueURLHash(&collection)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
-			deck.URLHash = hash
+			deck.Settings.URLHash = hash
 			deck.UserID = userID
 			_, err = collection.Create(&deck)
 			if err != nil {
@@ -85,7 +82,7 @@ func handleUpsertDeck(c *gin.Context) {
 			}
 			storedDeck = &deck
 		} else {
-			storedDeck, err = collection.GetDeckByURLHash(deck.URLHash)
+			storedDeck, err = collection.GetDeckByURLHash(deck.Settings.URLHash)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
@@ -127,13 +124,10 @@ func generateUniqueURLHash(collection *db.DeckCollection) (string, error) {
 
 func deckToDBDeck(deck *Deck) db.Deck {
 	return db.Deck{
-		URLHash:     deck.URLHash,
-		Name:        deck.Name,
-		Description: deck.Description,
-		Commanders:  cardListToNames(deck.Commanders),
-		Deck:        cardListToNames(deck.Deck),
-		Library:     cardListToNames(deck.Library),
-		Settings:    deck.Settings,
+		Commanders: cardListToNames(deck.Commanders),
+		Deck:       cardListToNames(deck.Deck),
+		Library:    cardListToNames(deck.Library),
+		Settings:   deck.Settings,
 	}
 }
 
@@ -165,12 +159,9 @@ func dbDeckToDeck(deck *db.Deck) (Deck, error) {
 	}
 
 	return Deck{
-		URLHash:     deck.URLHash,
-		Name:        deck.Name,
-		Description: deck.Description,
-		Commanders:  commanders,
-		Deck:        deckCards,
-		Library:     library,
-		Settings:    deck.Settings,
+		Commanders: commanders,
+		Deck:       deckCards,
+		Library:    library,
+		Settings:   deck.Settings,
 	}, nil
 }

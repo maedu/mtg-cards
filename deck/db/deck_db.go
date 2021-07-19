@@ -12,21 +12,21 @@ import (
 )
 
 type Settings struct {
+	URLHash          string `bson:"urlHash" json:"urlHash"`
+	Name             string `bson:"name" json:"name"`
+	Description      string `bson:"description" json:"description"`
 	DeckType         string `bson:"type" json:"type"`
 	Lands            int    `bson:"lands" json:"lands"`
 	SnowCoveredLands bool   `bson:"snowCoveredLands" json:"snowCoveredLands"`
 }
 
 type Deck struct {
-	ID          primitive.ObjectID `bson:"_id" json:"-"`
-	UserID      string             `bson:"user_id" json:"-"`
-	URLHash     string             `bson:"urlHash" json:"urlHash"`
-	Name        string             `bson:"name" json:"name"`
-	Description string             `bson:"description" json:"description"`
-	Commanders  []string           `bson:"commanders" json:"commanders"`
-	Deck        []string           `bson:"deck" json:"deck"`
-	Library     []string           `bson:"library" json:"library"`
-	Settings    Settings           `bson:"settings" json:"settings"`
+	ID         primitive.ObjectID `bson:"_id" json:"-"`
+	UserID     string             `bson:"user_id" json:"-"`
+	Commanders []string           `bson:"commanders" json:"commanders"`
+	Deck       []string           `bson:"deck" json:"deck"`
+	Library    []string           `bson:"library" json:"library"`
+	Settings   Settings           `bson:"settings" json:"settings"`
 }
 
 // DeckCollection ...
