@@ -55,7 +55,7 @@ func handlGetDeck(c *gin.Context) {
 func handleGetUserDecks(c *gin.Context) {
 	selectedUserName := c.Query("user")
 	var selectedUserID string
-	userID, loggedIn := auth.GetUserIDFromAccessToken(c, true)
+	userID, loggedIn := auth.GetUserIDFromAccessToken(c, false)
 	if selectedUserName != "" {
 		userCollection, err := userDB.GetUserCollection()
 		defer userCollection.Disconnect()
