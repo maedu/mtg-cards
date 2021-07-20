@@ -23,6 +23,8 @@ type Deck struct {
 func Setup(r *gin.Engine) {
 	r.GET("/api/decks/:urlHash", handlGetDeck)
 	r.POST("/api/decks", handleUpsertDeck)
+	r.POST("/api/decks/:urlHash/publish", handlePublishDeck)
+	r.POST("/api/decks/:urlHash/unpublish", handleUnpublishDeck)
 	r.GET("/api/decks", handleGetUserDecks)
 }
 func handlGetDeck(c *gin.Context) {
@@ -115,6 +117,58 @@ func handleGetUserDecks(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, decksWithCards)
+}
+
+func handlePublishDeck(c *gin.Context) {
+	setPublish(c, true)
+}
+func handleUnpublishDeck(c *gin.Context) {
+	setPublish(c, false)
+}
+
+func setPublish(c *gin.Context, publish bool) {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
+		urlHash := c.Param("urlHash")
+		if urlHash == "" {
+			c.JSON(http.StatusBadRequest, "Missing urLHash parameter")
+			return
+		}
+
+		collection, err := db.GetDeckCollection()
+		defer collection.Disconnect()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+
+		storedDeck, err := collection.GetDeckByURLHash(urlHash)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		if storedDeck == nil {
+			c.JSON(http.StatusNotFound, "Deck not found")
+			return
+		}
+
+		if storedDeck.UserID != userID {
+			c.JSON(http.StatusForbidden, err)
+			return
+		}
+
+		storedDeck.Settings.Published = publish
+		storedDeck, err = collection.Update(storedDeck)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, storedDeck)
+		return
+
+	}
+	c.JSON(http.StatusUnauthorized, nil)
+
 }
 
 func handleUpsertDeck(c *gin.Context) {
