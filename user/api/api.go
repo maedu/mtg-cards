@@ -70,7 +70,7 @@ func handleRenameUser(c *gin.Context) {
 
 		userName := c.Param("newName")
 		if !validUsername(userName) {
-			c.JSON(http.StatusBadRequest, "Username is invalid. Min lenght is 5 and only letter, numbers, - and _ allowed.")
+			c.JSON(http.StatusBadRequest, "Username is invalid. Min length is 5 and only letter, numbers, - and _ allowed.")
 			return
 		}
 
