@@ -43,6 +43,12 @@ func handlGetDeck(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "Deck not found")
 		return
 	}
+	userID, _ := auth.GetUserIDFromAccessToken(c, false)
+	if !canUserSeeDeck(deck, userID) {
+		c.JSON(http.StatusForbidden, "You are not allowed to see this deck")
+		return
+	}
+
 	deckWithCards, err := dbDeckToDeck(deck)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -50,6 +56,10 @@ func handlGetDeck(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, deckWithCards)
+}
+
+func canUserSeeDeck(deck *db.Deck, userID string) bool {
+	return deck.UserID == userID || deck.Settings.Published
 }
 
 func handleGetUserDecks(c *gin.Context) {
