@@ -8,6 +8,7 @@ import (
 	cardDB "github.com/maedu/mtg-cards/card/db"
 	"github.com/maedu/mtg-cards/deck/db"
 	"github.com/maedu/mtg-cards/user/auth"
+	userDB "github.com/maedu/mtg-cards/user/db"
 	"github.com/maedu/mtg-cards/util"
 )
 
@@ -38,6 +39,10 @@ func handlGetDeck(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
+	if deck == nil {
+		c.JSON(http.StatusNotFound, "Deck not found")
+		return
+	}
 	deckWithCards, err := dbDeckToDeck(deck)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -48,34 +53,58 @@ func handlGetDeck(c *gin.Context) {
 }
 
 func handleGetUserDecks(c *gin.Context) {
-	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
-
-		collection, err := db.GetDeckCollection()
-		defer collection.Disconnect()
+	selectedUserName := c.Query("user")
+	var selectedUserID string
+	userID, loggedIn := auth.GetUserIDFromAccessToken(c, true)
+	if selectedUserName != "" {
+		userCollection, err := userDB.GetUserCollection()
+		defer userCollection.Disconnect()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
-		decks, err := collection.GetDecksByUserID(userID)
+		user, err := userCollection.GetUserByUserName(selectedUserName)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
-		decksWithCards := []Deck{}
-		for _, deck := range decks {
-			deckWithCards, err := dbDeckToDeckForOverview(deck)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, err)
-				return
-			}
-			decksWithCards = append(decksWithCards, deckWithCards)
+		if user == nil {
+			c.JSON(http.StatusNotFound, "User not found")
+			return
 		}
 
-		c.JSON(http.StatusOK, decksWithCards)
-
+		selectedUserID = user.UserID
+	} else {
+		if !loggedIn {
+			c.JSON(http.StatusUnauthorized, nil)
+			return
+		}
+		selectedUserID = userID
 	}
 
-	c.JSON(http.StatusUnauthorized, nil)
+	collection, err := db.GetDeckCollection()
+	defer collection.Disconnect()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	publishedOnly := selectedUserID != userID
+	decks, err := collection.GetDecksByUserID(selectedUserID, publishedOnly)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	decksWithCards := []Deck{}
+	for _, deck := range decks {
+		deckWithCards, err := dbDeckToDeckForOverview(deck)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		decksWithCards = append(decksWithCards, deckWithCards)
+	}
+
+	c.JSON(http.StatusOK, decksWithCards)
 }
 
 func handleUpsertDeck(c *gin.Context) {
@@ -197,6 +226,8 @@ func dbDeckToDeckForOverview(deck *db.Deck) (Deck, error) {
 	}
 	return Deck{
 		Commanders: commanders,
+		Deck:       []*cardDB.Card{},
+		Library:    []*cardDB.Card{},
 		Settings:   deck.Settings,
 	}, nil
 }

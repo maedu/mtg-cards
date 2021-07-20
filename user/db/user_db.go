@@ -92,7 +92,7 @@ func (collection *UserCollection) GetUserByUserID(userID string) (*User, error) 
 	return user, nil
 }
 
-// GetUserByUserID retrives a user by its user id (aka email)
+// GetUserByUserID retrives a user by its user name
 func (collection *UserCollection) GetUserByUserName(userName string) (*User, error) {
 	var user *User
 	ctx := collection.Context

@@ -18,6 +18,7 @@ type Settings struct {
 	DeckType         string `bson:"type" json:"type"`
 	Lands            int    `bson:"lands" json:"lands"`
 	SnowCoveredLands bool   `bson:"snowCoveredLands" json:"snowCoveredLands"`
+	Published        bool   `bson:"published" json:"published"`
 }
 
 type Deck struct {
@@ -83,10 +84,24 @@ func (collection *DeckCollection) GetAllDecks() ([]*Deck, error) {
 }
 
 // GetDecksByUserID retrieves decks for the user from the db
-func (collection *DeckCollection) GetDecksByUserID(userID string) ([]*Deck, error) {
+func (collection *DeckCollection) GetDecksByUserID(userID string, publishedOnly bool) ([]*Deck, error) {
 	ctx := collection.Context
 	var decks []*Deck = []*Deck{}
-	cursor, err := collection.Collection.Find(ctx, bson.D{bson.E{Key: "user_id", Value: userID}})
+
+	filter := bson.M{"user_id": userID}
+	if publishedOnly {
+		filters := []bson.M{}
+		filters = append(filters, filter)
+		publishFilter := bson.M{"settings.published": true}
+		filters = append(filters, publishFilter)
+		filter = bson.M{
+			"$and": filters,
+		}
+	}
+
+	log.Printf("GetDecksByUserID: %+v", filter)
+
+	cursor, err := collection.Collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
