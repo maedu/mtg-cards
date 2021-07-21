@@ -180,6 +180,10 @@ func handleUpsertDeck(c *gin.Context) {
 			// c.BindJSON already sets the header to 400
 			return
 		}
+		if deckIsEmpty(&inputDeck) {
+			c.JSON(http.StatusBadRequest, "No cards selected, a deck needs at least one card")
+			return
+		}
 
 		deck := deckToDBDeck(&inputDeck)
 		deck.UserID = userID
@@ -244,6 +248,17 @@ func handleUpsertDeck(c *gin.Context) {
 	}
 	c.JSON(http.StatusUnauthorized, nil)
 
+}
+
+func deckIsEmpty(deck *Deck) bool {
+	if len(deck.Commanders) > 0 {
+		return false
+	}
+	if len(deck.Deck) > 0 {
+		return false
+	}
+
+	return true
 }
 
 func generateUniqueURLHash(collection *db.DeckCollection) (string, error) {
