@@ -173,3 +173,14 @@ func (collection *DeckCollection) Update(deck *Deck) (*Deck, error) {
 	}
 	return updatedDeck, nil
 }
+
+func (collection *DeckCollection) Delete(deck *Deck) error {
+	ctx := collection.Context
+
+	_, err := collection.Collection.DeleteOne(ctx, bson.M{"_id": deck.ID})
+	if err != nil {
+		log.Printf("Could not save Deck: %v", err)
+		return err
+	}
+	return nil
+}

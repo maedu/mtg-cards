@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	cardDB "github.com/maedu/mtg-cards/card/db"
@@ -25,6 +26,7 @@ func Setup(r *gin.Engine) {
 	r.POST("/api/decks", handleUpsertDeck)
 	r.POST("/api/decks/:urlHash/publish", handlePublishDeck)
 	r.POST("/api/decks/:urlHash/unpublish", handleUnpublishDeck)
+	r.DELETE("/api/decks/:urlHash", handleDeleteDeck)
 	r.GET("/api/decks", handleGetUserDecks)
 }
 func handlGetDeck(c *gin.Context) {
@@ -115,6 +117,8 @@ func handleGetUserDecks(c *gin.Context) {
 		}
 		decksWithCards = append(decksWithCards, deckWithCards)
 	}
+
+	sort.Sort(ByCommanders(decksWithCards))
 
 	c.JSON(http.StatusOK, decksWithCards)
 }
@@ -250,6 +254,48 @@ func handleUpsertDeck(c *gin.Context) {
 
 }
 
+func handleDeleteDeck(c *gin.Context) {
+	if userID, ok := auth.GetUserIDFromAccessToken(c, true); ok {
+
+		urlHash := c.Param("urlHash")
+		if urlHash == "" {
+			c.JSON(http.StatusBadRequest, "Missing urLHash parameter")
+			return
+		}
+
+		collection, err := db.GetDeckCollection()
+		defer collection.Disconnect()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+
+		storedDeck, err := collection.GetDeckByURLHash(urlHash)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+		if storedDeck != nil {
+			fmt.Printf("Stored deck found, %s == %s\n", storedDeck.UserID, userID)
+			if storedDeck.UserID != userID {
+				c.JSON(http.StatusForbidden, err)
+				return
+			}
+
+			err = collection.Delete(storedDeck)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, err)
+				return
+			}
+		}
+		c.JSON(http.StatusOK, nil)
+		return
+
+	}
+	c.JSON(http.StatusUnauthorized, nil)
+
+}
+
 func deckIsEmpty(deck *Deck) bool {
 	if len(deck.Commanders) > 0 {
 		return false
@@ -303,6 +349,7 @@ func dbDeckToDeckForOverview(deck *db.Deck) (Deck, error) {
 	if err != nil {
 		return Deck{}, err
 	}
+	sort.Sort(ByName(commanders))
 	return Deck{
 		Commanders: commanders,
 		Deck:       []*cardDB.Card{},
@@ -321,6 +368,8 @@ func dbDeckToDeck(deck *db.Deck) (Deck, error) {
 	if err != nil {
 		return Deck{}, err
 	}
+	sort.Sort(ByName(commanders))
+
 	deckCards, err := collection.GetCardsByNames(deck.Deck)
 	if err != nil {
 		return Deck{}, err
