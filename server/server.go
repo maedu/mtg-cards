@@ -13,6 +13,7 @@ func Configure() *gin.Engine {
 		AllowOriginFunc: func(origin string) bool {
 			return true //return strings.Contains(origin, "localhost")
 		},
+		AllowMethods: []string{"GET", "POST", "DELETE"},
 		AllowHeaders: []string{"Authorization", "Content-Type"},
 		MaxAge:       12 * time.Hour,
 	}))
